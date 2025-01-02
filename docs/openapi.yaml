@@ -1,0 +1,93 @@
+openapi: 3.0.3
+info:
+  title: Integron Sunrise - OpenAPI 3.0
+  contact:
+    email: moha@moha.fi
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+paths:
+    /sun:
+      get:
+        summary: Get sunrise and sunset times for a specific city
+        parameters:
+          - name: city
+            in: query
+            required: true
+            schema:
+              type: string
+            description: The name of the city to get sunrise and sunset times for
+        responses:
+          '200':
+            description: A JSON object containing sunrise and sunset times
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    date:
+                      type: string
+                      format: date
+                      example: "2023-11-29"
+                    sunrise:
+                      type: string
+                      example: "7:06:58 AM"
+                    sunset:
+                      type: string
+                      example: "4:48:45 PM"
+                    first_light:
+                      type: string
+                      example: "5:32:42 AM"
+                    last_light:
+                      type: string
+                      example: "6:23:02 PM"
+                    dawn:
+                      type: string
+                      example: "6:37:39 AM"
+                    dusk:
+                      type: string
+                      example: "5:18:04 PM"
+                    solar_noon:
+                      type: string
+                      example: "11:57:52 AM"
+                    golden_hour:
+                      type: string
+                      example: "4:07:57 PM"
+                    day_length:
+                      type: string
+                      example: "9:41:47"
+                    timezone:
+                      type: string
+                      example: "America/New_York"
+                    utc_offset:
+                      type: integer
+                      example: -300
+          '400':
+            description: Invalid city parameter
+          '500':
+            description: Internal server error
+        x-integron-steps:
+          - type: http
+            url: https://nominatim.openstreetmap.org/search?city=input.city&format=json&limit=1
+            method: GET
+            response: array
+            output:
+              lat: lat
+              lng: lon
+          - type: http
+            url: https://api.sunrisesunset.io/json?lat=output.lat&lng=output.lng
+            method: GET
+            response: object
+            output:
+              date: results.date
+              sunrise: results.sunrise
+              sunset: results.sunset
+              first_light: results.first_light
+              last_light: results.last_light
+              dawn: results.dawn
+              dusk: results.dusk
+              solar_noon: results.solar_noon
+              golden_hour: results.golden_hour
+              day_length: results.day_length
+              timezone: results.timezone
+              utc_offset: results.utc_offset

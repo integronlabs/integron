@@ -172,7 +172,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		Header:                 responseHeaders,
 	}
 	responseValidationInput.SetBodyBytes(responseBody)
-	// _ = openapi3filter.ValidateResponse(ctx, responseValidationInput)
+	err = openapi3filter.ValidateResponse(ctx, responseValidationInput)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(responseCode)
 	for k, v := range responseHeaders {

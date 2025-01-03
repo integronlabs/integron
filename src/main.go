@@ -11,6 +11,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers"
 	"github.com/getkin/kin-openapi/routers/gorillamux"
+	"github.com/swaggest/swgui/v5emb"
 )
 
 var router routers.Router
@@ -42,10 +43,12 @@ type Output struct {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(r.URL.Path)
 	// Find route
 	route, pathParams, err := router.FindRoute(r)
 	if err != nil {
-		panic(err)
+		http.Error(w, "Method not found", http.StatusNotFound)
+		return
 	}
 
 	// Validate request
@@ -123,6 +126,11 @@ func handler(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
+				if len(responseData) == 0 {
+					http.Error(w, "Empty response", http.StatusInternalServerError)
+					return
+				}
+
 				outputMap, ok := stepMap["output"].(map[string]interface{})
 				if !ok {
 					http.Error(w, "Invalid output format", http.StatusInternalServerError)
@@ -179,10 +187,17 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(responseCode)
 	for k, v := range responseHeaders {
 		w.Header().Set(k, v[0])
 	}
+
+	// CORS
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	w.WriteHeader(responseCode)
+
 	w.Write(responseBody)
 }
 
@@ -200,10 +215,16 @@ func getValueFromPath(data map[string]interface{}, path string) (interface{}, bo
 }
 
 func main() {
-	http.Handle("/", http.HandlerFunc(handler))
+	http.Handle("/api/", http.StripPrefix("/api", http.HandlerFunc(handler)))
 
 	fs := http.FileServer(http.Dir("../docs/"))
 	http.Handle("/docs/", http.StripPrefix("/docs/", fs))
+
+	http.Handle("/", v5emb.New(
+		"Integron Sunrise",
+		"/docs/openapi.yaml",
+		"/",
+	))
 
 	http.ListenAndServe(":8080", nil)
 }

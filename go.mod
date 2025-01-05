@@ -1,10 +1,18 @@
-module github.com/codemasteroy/integron
+module github.com/integronlabs/integron
 
 go 1.23.4
 
 require github.com/getkin/kin-openapi v0.128.0
 
-require github.com/vearutop/statigz v1.4.0 // indirect
+require (
+	github.com/felixge/httpsnoop v1.0.4 // indirect
+	github.com/go-logr/logr v1.4.2 // indirect
+	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/google/uuid v1.6.0 // indirect
+	github.com/vearutop/statigz v1.4.0 // indirect
+	github.com/yalp/jsonpath v0.0.0-20180802001716-5cc68e5049a0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+)
 
 require (
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect

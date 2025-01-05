@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
+	"time"
 
 	httpOperation "github.com/integronlabs/integron/http"
 
@@ -14,12 +16,44 @@ import (
 	"github.com/getkin/kin-openapi/routers"
 	"github.com/getkin/kin-openapi/routers/gorillamux"
 	"github.com/swaggest/swgui/v5emb"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
+
+var (
+	httpRequestsTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "http_requests_total",
+			Help: "Total number of HTTP requests",
+		},
+		[]string{"path"},
+	)
+	httpRequestDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "http_request_duration_seconds",
+			Help:    "Duration of HTTP requests",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"path"},
+	)
+)
+
+func init() {
+	prometheus.MustRegister(httpRequestsTotal)
+	prometheus.MustRegister(httpRequestDuration)
+}
 
 var router routers.Router
 var ctx context.Context
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	defer func() {
+		duration := time.Since(start).Seconds()
+		httpRequestsTotal.WithLabelValues(r.URL.Path).Inc()
+		httpRequestDuration.WithLabelValues(r.URL.Path).Observe(duration)
+	}()
 	// Find route
 	route, pathParams, err := router.FindRoute(r)
 	if err != nil {
@@ -43,6 +77,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var output interface{}
+	var stepInput interface{}
 	stepOutputs := make(map[string]interface{})
 	input := make(map[string]interface{})
 	// path params
@@ -56,13 +91,28 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	stepOutputs["request"] = input
 
-	steps, ok := route.PathItem.GetOperation(route.Method).Extensions["x-integron-steps"].([]interface{})
+	stepsArray, ok := route.PathItem.GetOperation(route.Method).Extensions["x-integron-steps"].([]interface{})
 
 	if !ok {
 		http.Error(w, "Invalid x-integron-steps", http.StatusInternalServerError)
 		return
 	}
-	for _, step := range steps {
+
+	steps := make(map[string]interface{})
+	currentStepKey := stepsArray[0].(map[string]interface{})["name"].(string)
+	for _, v := range stepsArray {
+		stepsMap := v.(map[string]interface{})
+		steps[stepsMap["name"].(string)] = stepsMap
+	}
+
+	stepInput = input
+	for {
+		step, ok := steps[currentStepKey]
+		var next string
+		if !ok {
+			http.Error(w, "Invalid step definition", http.StatusInternalServerError)
+			return
+		}
 		stepMap, ok := step.(map[string]interface{})
 		if !ok {
 			http.Error(w, "Invalid step definition", http.StatusInternalServerError)
@@ -71,13 +121,22 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 		switch (stepMap["type"]).(string) {
 		case "http":
-			stepOutputs[stepMap["name"].(string)], err = httpOperation.Run(stepMap, input, stepOutputs)
+			stepOutputs[currentStepKey], next, err = httpOperation.Run(stepMap, input, stepOutputs)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
+		case "error":
+			message, _ := json.Marshal(map[string]interface{}{"message": stepInput})
+			http.Error(w, string(message), http.StatusInternalServerError)
+			return
 		}
-		output = stepOutputs[stepMap["name"].(string)]
+		if next == "" {
+			output = stepOutputs[currentStepKey]
+			break
+		}
+		stepInput = stepOutputs[currentStepKey]
+		currentStepKey = next
 	}
 	responseHeaders := http.Header{"Content-Type": []string{"application/json"},
 		"Access-Control-Allow-Origin":  []string{"*"},
@@ -148,5 +207,7 @@ func main() {
 		"/ui/",
 	))
 
-	http.ListenAndServe(":8080", nil)
+	http.Handle("/metrics", promhttp.Handler())
+
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }

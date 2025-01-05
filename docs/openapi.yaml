@@ -64,30 +64,53 @@ paths:
                       example: -300
           '400':
             description: Invalid data
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: "Invalid data"
           '500':
             description: Internal server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: "Internal server error"
         x-integron-steps:
           - name: geocode
             type: http
             url: https://nominatim.openstreetmap.org/search?city=$.request.city&format=json&limit=1
             method: GET
-            output:
-              lat: $[0].lat
-              lng: $[0].lon
+            '200':
+              output:
+                lat: $.body[0].lat
+                lng: $.body[0].lon
+              next: sunrise-sunset
           - name: sunrise-sunset
             type: http
             url: https://api.sunrisesunset.io/json?lat=$.geocode.lat&lng=$.geocode.lng
             method: GET
-            output:
-              date: $.results.date
-              sunrise: $.results.sunrise
-              sunset: $.results.sunset
-              first_light: $.results.first_light
-              last_light: $.results.last_light
-              dawn: $.results.dawn
-              dusk: $.results.dusk
-              solar_noon: $.results.solar_noon
-              golden_hour: $.results.golden_hour
-              day_length: $.results.day_length
-              timezone: $.results.timezone
-              utc_offset: $.results.utc_offset
+            '200':
+              output:
+                date: $.body.results.date
+                sunrise: $.body.results.sunrise
+                sunset: $.body.results.sunset
+                first_light: $.body.results.first_light
+                last_light: $.body.results.last_light
+                dawn: $.body.results.dawn
+                dusk: $.body.results.dusk
+                solar_noon: $.body.results.solar_noon
+                golden_hour: $.body.results.golden_hour
+                day_length: $.body.results.day_length
+                timezone: $.body.results.timezone
+                utc_offset: $.body.results.utc_offset
+              next: ""
+          - name: error
+            type: error
+            next: ""

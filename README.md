@@ -6,4 +6,6 @@
 
 ## Trying out
 
-```go run main/main.go```
+```
+go run main/main.go
+```

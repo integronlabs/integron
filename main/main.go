@@ -47,6 +47,61 @@ func init() {
 var router routers.Router
 var ctx context.Context
 
+func extractParams(pathParams map[string]string, queryParams map[string][]string) map[string]interface{} {
+	params := make(map[string]interface{})
+	for key, value := range pathParams {
+		params[key] = value
+	}
+	for key, value := range queryParams {
+		params[key] = value[0]
+	}
+	return params
+}
+
+func createStepsMap(stepsArray []interface{}) (map[string]interface{}, error) {
+	steps := make(map[string]interface{})
+	for _, v := range stepsArray {
+		stepsMap, ok := v.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("invalid step definition")
+		}
+		steps[stepsMap["name"].(string)] = stepsMap
+	}
+	return steps, nil
+}
+
+func fillHeaders(responseHeaders http.Header, w http.ResponseWriter) {
+	for k, v := range responseHeaders {
+		w.Header().Set(k, v[0])
+	}
+}
+
+func processStep(currentStepKey string, w http.ResponseWriter, steps map[string]interface{}, input map[string]interface{}, stepOutputs map[string]interface{}, stepInput interface{}) (interface{}, string) {
+	var next string
+	var err error
+	step, ok := steps[currentStepKey]
+	if !ok {
+		return fmt.Errorf("invalid step definition"), "error"
+	}
+	stepMap, ok := step.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("invalid step definition"), "error"
+	}
+
+	switch (stepMap["type"]).(string) {
+	case "http":
+		stepOutputs[currentStepKey], next, err = httpOperation.Run(stepMap, input, stepOutputs)
+		if err != nil {
+			return err, "error"
+		}
+	case "error":
+		message, _ := json.Marshal(map[string]interface{}{"message": stepInput})
+		http.Error(w, string(message), http.StatusInternalServerError)
+		return nil, "end"
+	}
+	return stepOutputs[currentStepKey], next
+}
+
 func handler(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	defer func() {
@@ -79,15 +134,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	var output interface{}
 	var stepInput interface{}
 	stepOutputs := make(map[string]interface{})
-	input := make(map[string]interface{})
-	// path params
-	for key, value := range pathParams {
-		input[key] = value
-	}
-	// query params
-	for key, value := range r.URL.Query() {
-		input[key] = value[0]
-	}
+	input := extractParams(pathParams, r.URL.Query())
 
 	stepOutputs["request"] = input
 
@@ -98,47 +145,29 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	steps := make(map[string]interface{})
 	currentStepKey := stepsArray[0].(map[string]interface{})["name"].(string)
-	for _, v := range stepsArray {
-		stepsMap := v.(map[string]interface{})
-		steps[stepsMap["name"].(string)] = stepsMap
+	steps, err := createStepsMap(stepsArray)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	stepInput = input
 	for {
-		step, ok := steps[currentStepKey]
 		var next string
-		if !ok {
-			http.Error(w, "Invalid step definition", http.StatusInternalServerError)
-			return
-		}
-		stepMap, ok := step.(map[string]interface{})
-		if !ok {
-			http.Error(w, "Invalid step definition", http.StatusInternalServerError)
-			return
-		}
+		stepOutputs[currentStepKey], next = processStep(currentStepKey, w, steps, input, stepOutputs, stepInput)
 
-		switch (stepMap["type"]).(string) {
-		case "http":
-			stepOutputs[currentStepKey], next, err = httpOperation.Run(stepMap, input, stepOutputs)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		case "error":
-			message, _ := json.Marshal(map[string]interface{}{"message": stepInput})
-			http.Error(w, string(message), http.StatusInternalServerError)
-			return
-		}
 		if next == "" {
 			output = stepOutputs[currentStepKey]
 			break
+		} else if next == "end" {
+			return
 		}
 		stepInput = stepOutputs[currentStepKey]
 		currentStepKey = next
 	}
-	responseHeaders := http.Header{"Content-Type": []string{"application/json"},
+	responseHeaders := http.Header{
+		"Content-Type":                 []string{"application/json"},
 		"Access-Control-Allow-Origin":  []string{"*"},
 		"Access-Control-Allow-Methods": []string{"GET, POST, PUT, DELETE"},
 		"Access-Control-Allow-Headers": []string{"Content-Type"},
@@ -163,9 +192,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for k, v := range responseHeaders {
-		w.Header().Set(k, v[0])
-	}
+	fillHeaders(responseHeaders, w)
 
 	w.WriteHeader(responseCode)
 

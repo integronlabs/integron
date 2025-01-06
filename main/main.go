@@ -47,6 +47,8 @@ func init() {
 var router routers.Router
 var ctx context.Context
 
+const INVALID_STEP_DEFINITION = "invalid step definition"
+
 func extractParams(pathParams map[string]string, queryParams map[string][]string) map[string]interface{} {
 	params := make(map[string]interface{})
 	for key, value := range pathParams {
@@ -63,7 +65,7 @@ func createStepsMap(stepsArray []interface{}) (map[string]interface{}, error) {
 	for _, v := range stepsArray {
 		stepsMap, ok := v.(map[string]interface{})
 		if !ok {
-			return nil, fmt.Errorf("invalid step definition")
+			return nil, fmt.Errorf(INVALID_STEP_DEFINITION)
 		}
 		steps[stepsMap["name"].(string)] = stepsMap
 	}
@@ -81,11 +83,11 @@ func processStep(currentStepKey string, w http.ResponseWriter, steps map[string]
 	var err error
 	step, ok := steps[currentStepKey]
 	if !ok {
-		return fmt.Errorf("invalid step definition"), "error"
+		return fmt.Errorf(INVALID_STEP_DEFINITION), "error"
 	}
 	stepMap, ok := step.(map[string]interface{})
 	if !ok {
-		return fmt.Errorf("invalid step definition"), "error"
+		return fmt.Errorf(INVALID_STEP_DEFINITION), "error"
 	}
 
 	switch (stepMap["type"]).(string) {

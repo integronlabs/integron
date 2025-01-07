@@ -72,7 +72,7 @@ func createStepsMap(stepsArray []interface{}) (map[string]interface{}, error) {
 	return steps, nil
 }
 
-func fillHeaders(responseHeaders http.Header, w http.ResponseWriter) {
+func fillResponseHeaders(responseHeaders http.Header, w http.ResponseWriter) {
 	for k, v := range responseHeaders {
 		w.Header().Set(k, v[0])
 	}
@@ -194,7 +194,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fillHeaders(responseHeaders, w)
+	fillResponseHeaders(responseHeaders, w)
 
 	w.WriteHeader(responseCode)
 

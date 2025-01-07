@@ -36,9 +36,73 @@ func init() {
 	prometheus.MustRegister(httpRequestDuration)
 }
 
-func Run(stepMap map[string]interface{}, input map[string]interface{}, stepOutputs map[string]interface{}) (interface{}, string, error) {
-	start := time.Now()
+func transformBody(body map[string]interface{}, output map[string]interface{}) map[string]interface{} {
+	transformedBody := make(map[string]interface{})
+	for key, path := range output {
+		if value, err := jsonpath.Read(body, path.(string)); err == nil {
+			transformedBody[key] = value
+		}
+	}
+	return transformedBody
+}
 
+func getActions(stepMap map[string]interface{}, statusCodeStr string) (map[string]interface{}, string, error) {
+	statusMap, ok := stepMap[statusCodeStr].(map[string]interface{})
+	if !ok {
+		return map[string]interface{}{}, "error", fmt.Errorf("could not find actions for status %s", statusCodeStr)
+	}
+	outputMap, ok := statusMap["output"].(map[string]interface{})
+	if !ok {
+		return map[string]interface{}{}, "error", fmt.Errorf("invalid output format")
+	}
+	next, ok := stepMap[statusCodeStr].(map[string]interface{})["next"].(string)
+	if !ok {
+		return map[string]interface{}{}, "error", fmt.Errorf("invalid next format")
+	}
+	return outputMap, next, nil
+}
+
+func httpRequest(method string, url string, requestBodyString string, headers map[string]interface{}, stepOutputs map[string]interface{}) (*http.Response, error) {
+	url, err := helpers.Replace(url, stepOutputs)
+	if err != nil {
+		return nil, err
+	}
+	requestBodyString, err = helpers.Replace(requestBodyString, stepOutputs)
+	if err != nil {
+		return nil, err
+	}
+
+	client := &http.Client{}
+
+	httpRequest, err := http.NewRequest(method, url, strings.NewReader(requestBodyString))
+	if err != nil {
+		return nil, err
+	}
+	// set headers
+	for key, value := range headers {
+		value, err := helpers.Replace(value.(string), stepOutputs)
+		if err != nil {
+			return nil, err
+		}
+		httpRequest.Header.Set(key, value)
+	}
+	start := time.Now()
+	response, err := client.Do(httpRequest)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		duration := time.Since(start).Seconds()
+		httpRequestsTotal.WithLabelValues(httpRequest.URL.Path).Inc()
+		httpRequestDuration.WithLabelValues(httpRequest.URL.Path).Observe(duration)
+	}()
+
+	return response, nil
+}
+
+func Run(stepMap map[string]interface{}, input map[string]interface{}, stepOutputs map[string]interface{}) (interface{}, string, error) {
 	// get values
 	method, _ := stepMap["method"].(string)
 	url, _ := stepMap["url"].(string)
@@ -47,39 +111,7 @@ func Run(stepMap map[string]interface{}, input map[string]interface{}, stepOutpu
 	requestBodyString := string(requestBodyJson)
 	headers, _ := stepMap["headers"].(map[string]interface{})
 
-	body := make(map[string]interface{})
-
-	url, err := helpers.Replace(url, stepOutputs)
-	if err != nil {
-		return err.Error(), "error", nil
-	}
-	requestBodyString, err = helpers.Replace(requestBodyString, stepOutputs)
-	if err != nil {
-		return err.Error(), "error", nil
-	}
-
-	fmt.Println(url, requestBodyString)
-
-	client := &http.Client{}
-
-	httpRequest, err := http.NewRequest(method, url, strings.NewReader(requestBodyString))
-	defer func() {
-		duration := time.Since(start).Seconds()
-		httpRequestsTotal.WithLabelValues(httpRequest.URL.Path).Inc()
-		httpRequestDuration.WithLabelValues(httpRequest.URL.Path).Observe(duration)
-	}()
-	if err != nil {
-		return err.Error(), "error", nil
-	}
-	// set headers
-	for key, value := range headers {
-		value, err := helpers.Replace(value.(string), stepOutputs)
-		if err != nil {
-			return err.Error(), "error", nil
-		}
-		httpRequest.Header.Set(key, value)
-	}
-	response, err := client.Do(httpRequest)
+	response, err := httpRequest(method, url, requestBodyString, headers, stepOutputs)
 
 	if err != nil {
 		return err.Error(), "error", nil
@@ -97,28 +129,15 @@ func Run(stepMap map[string]interface{}, input map[string]interface{}, stepOutpu
 		"headers": response.Header,
 		"body":    responseData,
 	}
+
 	statusCodeStr := fmt.Sprintf("%d", response.StatusCode)
-	statusMap, ok := stepMap[statusCodeStr].(map[string]interface{})
-	if !ok {
-		return "Invalid status format", "error", nil
-	}
-	outputMap, ok := statusMap["output"].(map[string]interface{})
-	if !ok {
-		return "Invalid output format", "error", nil
-	}
-	next, ok := stepMap[statusCodeStr].(map[string]interface{})["next"].(string)
-	if !ok {
-		return "Invalid next format", "error", nil
+
+	outputMap, next, err := getActions(stepMap, statusCodeStr)
+	if err != nil {
+		return err.Error(), "error", nil
 	}
 
-	for key, path := range outputMap {
-		if value, err := jsonpath.Read(responseMap, path.(string)); err == nil {
-			body[key] = value
-		}
-		if err != nil {
-			return err.Error(), "error", nil
-		}
-	}
+	body := transformBody(responseMap, outputMap)
 
 	return body, next, nil
 }

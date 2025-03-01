@@ -1,67 +1,39 @@
 openapi: 3.0.3
 info:
-  title: Integron Sunrise - OpenAPI 3.0
+  title: Integron Cat Facts - OpenAPI 3.0
   contact:
     email: moha@moha.fi
   version: 1.0.0
 servers:
   - url: http://localhost:8080
 paths:
-    /sun:
+    /facts:
       get:
-        summary: Get sunrise and sunset times for a specific city
+        summary: Get a random cat fact
         parameters:
-          - name: city
+          - name: amount
             in: query
             required: true
             schema:
-              type: string
+              type: integer
             description: The name of the city to get sunrise and sunset times for
+            example: 5
         responses:
           '200':
-            description: A JSON object containing sunrise and sunset times
+            description: A JSON object containing cat facts
             content:
               application/json:
                 schema:
-                  type: object
-                  properties:
-                    date:
-                      type: string
-                      format: date
-                      example: "2023-11-29"
-                    sunrise:
-                      type: string
-                      example: "7:06:58 AM"
-                    sunset:
-                      type: string
-                      example: "4:48:45 PM"
-                    first_light:
-                      type: string
-                      example: "5:32:42 AM"
-                    last_light:
-                      type: string
-                      example: "6:23:02 PM"
-                    dawn:
-                      type: string
-                      example: "6:37:39 AM"
-                    dusk:
-                      type: string
-                      example: "5:18:04 PM"
-                    solar_noon:
-                      type: string
-                      example: "11:57:52 AM"
-                    golden_hour:
-                      type: string
-                      example: "4:07:57 PM"
-                    day_length:
-                      type: string
-                      example: "9:41:47"
-                    timezone:
-                      type: string
-                      example: "America/New_York"
-                    utc_offset:
-                      type: integer
-                      example: -300
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      fact:
+                        type: string
+                        example: "Cats have a third eyelid called a haw."
+                      id:
+                        type: string
+                        example: "63fb7ae0fcf661e5a09783aa"
           '400':
             description: Invalid data
             content:
@@ -83,34 +55,21 @@ paths:
                       type: string
                       example: "Internal server error"
         x-integron-steps:
-          - name: geocode
+          - name: catFacts
             type: http
-            url: https://nominatim.openstreetmap.org/search?city=$.request.city&format=json&limit=1
+            url: https://cat-fact.herokuapp.com/facts/random?amount=$.request.amount&animal_type=cat
             method: GET
             '200':
               output:
-                lat: $.body[0].lat
-                lng: $.body[0].lon
-              next: sunrise-sunset
-          - name: sunrise-sunset
-            type: http
-            url: https://api.sunrisesunset.io/json?lat=$.geocode.lat&lng=$.geocode.lng
-            method: GET
-            '200':
-              output:
-                date: $.body.results.date
-                sunrise: $.body.results.sunrise
-                sunset: $.body.results.sunset
-                first_light: $.body.results.first_light
-                last_light: $.body.results.last_light
-                dawn: $.body.results.dawn
-                dusk: $.body.results.dusk
-                solar_noon: $.body.results.solar_noon
-                golden_hour: $.body.results.golden_hour
-                day_length: $.body.results.day_length
-                timezone: $.body.results.timezone
-                utc_offset: $.body.results.utc_offset
-              next: ""
+                response: $.body
+              next: "arrayTransform"
+          - name: arrayTransform
+            type: array
+            input: $.catFacts.response
+            output:
+              fact: $.text
+              id: $._id
+            next: ""
           - name: error
             type: error
             next: ""

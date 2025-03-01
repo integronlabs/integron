@@ -3,12 +3,13 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/PaesslerAG/jsonpath"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/yalp/jsonpath"
 
 	"github.com/integronlabs/integron/helpers"
 )
@@ -38,9 +39,19 @@ func init() {
 
 func transformBody(body map[string]interface{}, output map[string]interface{}) map[string]interface{} {
 	transformedBody := make(map[string]interface{})
-	for key, path := range output {
-		if value, err := jsonpath.Read(body, path.(string)); err == nil {
-			transformedBody[key] = value
+	// if output is not array, transform
+	for key, value := range output {
+		if valueStr, ok := value.(string); ok {
+			if strings.HasPrefix(valueStr, "$.") {
+				// get value from body
+				value, err := jsonpath.Get(valueStr, body)
+				if err != nil {
+					log.Printf("could not read value from body: %v", err)
+				}
+				transformedBody[key] = value
+			} else {
+				transformedBody[key] = value
+			}
 		}
 	}
 	return transformedBody
@@ -133,6 +144,7 @@ func Run(stepMap map[string]interface{}, input map[string]interface{}, stepOutpu
 	statusCodeStr := fmt.Sprintf("%d", response.StatusCode)
 
 	outputMap, next, err := getActions(stepMap, statusCodeStr)
+
 	if err != nil {
 		return err.Error(), "error", nil
 	}

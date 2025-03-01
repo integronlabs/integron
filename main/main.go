@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	arrayOperation "github.com/integronlabs/integron/array"
 	httpOperation "github.com/integronlabs/integron/http"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -79,6 +80,7 @@ func fillResponseHeaders(responseHeaders http.Header, w http.ResponseWriter) {
 }
 
 func processStep(currentStepKey string, w http.ResponseWriter, steps map[string]interface{}, input map[string]interface{}, stepOutputs map[string]interface{}, stepInput interface{}) (interface{}, string) {
+	log.Printf("Processing step: %s", currentStepKey)
 	var next string
 	var err error
 	step, ok := steps[currentStepKey]
@@ -93,6 +95,11 @@ func processStep(currentStepKey string, w http.ResponseWriter, steps map[string]
 	switch (stepMap["type"]).(string) {
 	case "http":
 		stepOutputs[currentStepKey], next, err = httpOperation.Run(stepMap, input, stepOutputs)
+		if err != nil {
+			return err, "error"
+		}
+	case "array":
+		stepOutputs[currentStepKey], next, err = arrayOperation.Run(stepMap, input, stepOutputs)
 		if err != nil {
 			return err, "error"
 		}

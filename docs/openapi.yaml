@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Integron Cat Facts - OpenAPI 3.0
+  title: Integron Dog Facts - OpenAPI 3.0
   contact:
     email: moha@moha.fi
   version: 1.0.0
@@ -9,18 +9,18 @@ servers:
 paths:
     /facts:
       get:
-        summary: Get a random cat fact
+        summary: Get a random dog fact
         parameters:
           - name: amount
             in: query
             required: true
             schema:
               type: integer
-            description: The name of the city to get sunrise and sunset times for
+            description: Number of facts to retrieve
             example: 5
         responses:
           '200':
-            description: A JSON object containing cat facts
+            description: A JSON object containing dog facts
             content:
               application/json:
                 schema:
@@ -30,10 +30,10 @@ paths:
                     properties:
                       fact:
                         type: string
-                        example: "Cats have a third eyelid called a haw."
+                        example: "Although it was once illegal to keep dogs as pets in Iceland's capital city, the laws have been relaxed."
                       id:
                         type: string
-                        example: "63fb7ae0fcf661e5a09783aa"
+                        example: "9ed6fa65-8645-4cea-8124-372fc59788d2"
           '400':
             description: Invalid data
             content:
@@ -55,9 +55,9 @@ paths:
                       type: string
                       example: "Internal server error"
         x-integron-steps:
-          - name: catFacts
+          - name: dogFacts
             type: http
-            url: https://cat-fact.herokuapp.com/facts/random?amount=$.request.amount&animal_type=cat
+            url: 'https://dogapi.dog/api/v2/facts?limit=$.request.amount'
             method: GET
             '200':
               output:
@@ -65,10 +65,10 @@ paths:
               next: "arrayTransform"
           - name: arrayTransform
             type: array
-            input: $.catFacts.response
+            input: $.dogFacts.response.data
             output:
-              fact: $.text
-              id: $._id
+              fact: $.attributes.body
+              id: $.id
             next: ""
           - name: error
             type: error

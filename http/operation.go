@@ -74,7 +74,7 @@ func getActions(stepMap map[string]interface{}, statusCodeStr string) (map[strin
 	return outputMap, next, nil
 }
 
-func httpRequest(ctx context.Context, client http.Client, method string, url string, requestBodyString string, headers map[string]interface{}, stepOutputs map[string]interface{}) (*http.Response, error) {
+func httpRequest(ctx context.Context, client *http.Client, method string, url string, requestBodyString string, headers map[string]interface{}, stepOutputs map[string]interface{}) (*http.Response, error) {
 	url, err := helpers.Replace(url, stepOutputs)
 	if err != nil {
 		return nil, err
@@ -112,7 +112,7 @@ func httpRequest(ctx context.Context, client http.Client, method string, url str
 	return response, nil
 }
 
-func Run(ctx context.Context, client http.Client, stepMap map[string]interface{}, input map[string]interface{}, stepOutputs map[string]interface{}) (interface{}, string, error) {
+func Run(ctx context.Context, client *http.Client, stepMap map[string]interface{}, input map[string]interface{}, stepOutputs map[string]interface{}) (interface{}, string, error) {
 	// get values
 	method, _ := stepMap["method"].(string)
 	url, _ := stepMap["url"].(string)

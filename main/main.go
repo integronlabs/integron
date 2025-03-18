@@ -11,6 +11,7 @@ import (
 
 	arrayOperation "github.com/integronlabs/integron/array"
 	httpOperation "github.com/integronlabs/integron/http"
+	objectOperation "github.com/integronlabs/integron/object"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -101,6 +102,11 @@ func processStep(currentStepKey string, w http.ResponseWriter, steps map[string]
 		}
 	case "array":
 		stepOutputs[currentStepKey], next, err = arrayOperation.Run(ctx, stepMap, input, stepOutputs)
+		if err != nil {
+			return err, "error"
+		}
+	case "object":
+		stepOutputs[currentStepKey], next, err = objectOperation.Run(ctx, stepMap, input, stepOutputs)
 		if err != nil {
 			return err, "error"
 		}

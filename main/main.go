@@ -94,7 +94,8 @@ func processStep(currentStepKey string, w http.ResponseWriter, steps map[string]
 
 	switch (stepMap["type"]).(string) {
 	case "http":
-		stepOutputs[currentStepKey], next, err = httpOperation.Run(ctx, stepMap, input, stepOutputs)
+		client := http.Client{}
+		stepOutputs[currentStepKey], next, err = httpOperation.Run(ctx, client, stepMap, input, stepOutputs)
 		if err != nil {
 			return err, "error"
 		}

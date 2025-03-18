@@ -5,7 +5,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/yalp/jsonpath"
+	"log"
+
+	"github.com/PaesslerAG/jsonpath"
 )
 
 func Replace(input string, stepOutputs map[string]interface{}) (string, error) {
@@ -13,7 +15,7 @@ func Replace(input string, stepOutputs map[string]interface{}) (string, error) {
 	matches := re.FindAllString(input, -1)
 
 	for _, match := range matches {
-		value, err := jsonpath.Read(stepOutputs, match)
+		value, err := jsonpath.Get(match, stepOutputs)
 		if err != nil {
 			return input, err
 		}
@@ -21,4 +23,35 @@ func Replace(input string, stepOutputs map[string]interface{}) (string, error) {
 	}
 
 	return input, nil
+}
+
+func TransformBody(body interface{}, output map[string]interface{}) interface{} {
+	// if output is array, go through each element and transform
+	if bodyArray, ok := body.([]interface{}); ok {
+
+		transformedBody := make([]interface{}, 0)
+		for _, bodyMap := range bodyArray {
+			transformed := TransformBody(bodyMap, output)
+			transformedBody = append(transformedBody, transformed)
+		}
+		return transformedBody
+	}
+
+	transformedBody := make(map[string]interface{})
+	// if output is not array, transform
+	for key, value := range output {
+		if valueStr, ok := value.(string); ok {
+			if strings.HasPrefix(valueStr, "$.") {
+				// get value from body
+				value, err := jsonpath.Get(valueStr, body)
+				if err != nil {
+					log.Printf("could not read value from body: %v", err)
+				}
+				transformedBody[key] = value
+			} else {
+				transformedBody[key] = value
+			}
+		}
+	}
+	return transformedBody
 }

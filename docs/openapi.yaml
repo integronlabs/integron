@@ -24,16 +24,19 @@ paths:
             content:
               application/json:
                 schema:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      fact:
-                        type: string
-                        example: "Although it was once illegal to keep dogs as pets in Iceland's capital city, the laws have been relaxed."
-                      id:
-                        type: string
-                        example: "9ed6fa65-8645-4cea-8124-372fc59788d2"
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          fact:
+                            type: string
+                            example: "Although it was once illegal to keep dogs as pets in Iceland's capital city, the laws have been relaxed."
+                          id:
+                            type: string
+                            example: "9ed6fa65-8645-4cea-8124-372fc59788d2"
           '400':
             description: Invalid data
             content:
@@ -69,6 +72,11 @@ paths:
             output:
               fact: $.attributes.body
               id: $.id
+            next: "responseMarshal"
+          - name: responseMarshal
+            type: object
+            output:
+              data: $.arrayTransform
             next: ""
           - name: error
             type: error

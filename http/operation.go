@@ -4,12 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/PaesslerAG/jsonpath"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/integronlabs/integron/helpers"
@@ -36,26 +34,6 @@ var (
 func init() {
 	prometheus.MustRegister(httpRequestsTotal)
 	prometheus.MustRegister(httpRequestDuration)
-}
-
-func transformBody(body map[string]interface{}, output map[string]interface{}) map[string]interface{} {
-	transformedBody := make(map[string]interface{})
-	// if output is not array, transform
-	for key, value := range output {
-		if valueStr, ok := value.(string); ok {
-			if strings.HasPrefix(valueStr, "$.") {
-				// get value from body
-				value, err := jsonpath.Get(valueStr, body)
-				if err != nil {
-					log.Printf("could not read value from body: %v", err)
-				}
-				transformedBody[key] = value
-			} else {
-				transformedBody[key] = value
-			}
-		}
-	}
-	return transformedBody
 }
 
 func getActions(stepMap map[string]interface{}, statusCodeStr string) (map[string]interface{}, string, error) {
@@ -148,7 +126,7 @@ func Run(ctx context.Context, client *http.Client, stepMap map[string]interface{
 		return err.Error(), "error", nil
 	}
 
-	body := transformBody(responseMap, outputMap)
+	body := helpers.TransformBody(responseMap, outputMap)
 
 	return body, next, nil
 }

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -73,7 +74,7 @@ func getActions(stepMap map[string]interface{}, statusCodeStr string) (map[strin
 	return outputMap, next, nil
 }
 
-func httpRequest(method string, url string, requestBodyString string, headers map[string]interface{}, stepOutputs map[string]interface{}) (*http.Response, error) {
+func httpRequest(ctx context.Context, method string, url string, requestBodyString string, headers map[string]interface{}, stepOutputs map[string]interface{}) (*http.Response, error) {
 	url, err := helpers.Replace(url, stepOutputs)
 	if err != nil {
 		return nil, err
@@ -85,7 +86,7 @@ func httpRequest(method string, url string, requestBodyString string, headers ma
 
 	client := &http.Client{}
 
-	httpRequest, err := http.NewRequest(method, url, strings.NewReader(requestBodyString))
+	httpRequest, err := http.NewRequestWithContext(ctx, method, url, strings.NewReader(requestBodyString))
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +114,7 @@ func httpRequest(method string, url string, requestBodyString string, headers ma
 	return response, nil
 }
 
-func Run(stepMap map[string]interface{}, input map[string]interface{}, stepOutputs map[string]interface{}) (interface{}, string, error) {
+func Run(ctx context.Context, stepMap map[string]interface{}, input map[string]interface{}, stepOutputs map[string]interface{}) (interface{}, string, error) {
 	// get values
 	method, _ := stepMap["method"].(string)
 	url, _ := stepMap["url"].(string)
@@ -122,7 +123,7 @@ func Run(stepMap map[string]interface{}, input map[string]interface{}, stepOutpu
 	requestBodyString := string(requestBodyJson)
 	headers, _ := stepMap["headers"].(map[string]interface{})
 
-	response, err := httpRequest(method, url, requestBodyString, headers, stepOutputs)
+	response, err := httpRequest(ctx, method, url, requestBodyString, headers, stepOutputs)
 
 	if err != nil {
 		return err.Error(), "error", nil

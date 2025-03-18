@@ -94,12 +94,12 @@ func processStep(currentStepKey string, w http.ResponseWriter, steps map[string]
 
 	switch (stepMap["type"]).(string) {
 	case "http":
-		stepOutputs[currentStepKey], next, err = httpOperation.Run(stepMap, input, stepOutputs)
+		stepOutputs[currentStepKey], next, err = httpOperation.Run(ctx, stepMap, input, stepOutputs)
 		if err != nil {
 			return err, "error"
 		}
 	case "array":
-		stepOutputs[currentStepKey], next, err = arrayOperation.Run(stepMap, input, stepOutputs)
+		stepOutputs[currentStepKey], next, err = arrayOperation.Run(ctx, stepMap, input, stepOutputs)
 		if err != nil {
 			return err, "error"
 		}

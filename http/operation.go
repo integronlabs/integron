@@ -57,10 +57,6 @@ func httpRequest(ctx context.Context, client *http.Client, method string, url st
 	if err != nil {
 		return nil, err
 	}
-	requestBodyString, err = helpers.Replace(requestBodyString, stepOutputs)
-	if err != nil {
-		return nil, err
-	}
 
 	httpRequest, err := http.NewRequestWithContext(ctx, method, url, strings.NewReader(requestBodyString))
 	if err != nil {
@@ -94,7 +90,7 @@ func Run(ctx context.Context, client *http.Client, stepMap map[string]interface{
 	// get values
 	method, _ := stepMap["method"].(string)
 	url, _ := stepMap["url"].(string)
-	requestBody, _ := stepMap["body"].(map[string]interface{})
+	requestBody := helpers.TransformBody(stepOutputs, stepMap["body"].(map[string]interface{}))
 	requestBodyJson, _ := json.Marshal(requestBody)
 	requestBodyString := string(requestBodyJson)
 	headers, _ := stepMap["headers"].(map[string]interface{})

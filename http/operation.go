@@ -90,10 +90,12 @@ func Run(ctx context.Context, client *http.Client, stepMap map[string]interface{
 	// get values
 	method, _ := stepMap["method"].(string)
 	url, _ := stepMap["url"].(string)
-	requestBody := helpers.TransformBody(stepOutputs, stepMap["body"].(map[string]interface{}))
+	requestBodyMap, _ := stepMap["body"].(map[string]interface{})
+	headers, _ := stepMap["headers"].(map[string]interface{})
+
+	requestBody := helpers.TransformBody(stepOutputs, requestBodyMap)
 	requestBodyJson, _ := json.Marshal(requestBody)
 	requestBodyString := string(requestBodyJson)
-	headers, _ := stepMap["headers"].(map[string]interface{})
 
 	response, err := httpRequest(ctx, client, method, url, requestBodyString, headers, stepOutputs)
 

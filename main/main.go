@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/integronlabs/integron/helpers"
+
 	arrayOperation "github.com/integronlabs/integron/array"
 	httpOperation "github.com/integronlabs/integron/http"
 	objectOperation "github.com/integronlabs/integron/object"
@@ -49,48 +51,17 @@ func init() {
 var router routers.Router
 var ctx context.Context
 
-const INVALID_STEP_DEFINITION = "invalid step definition"
-
-func extractParams(pathParams map[string]string, queryParams map[string][]string) map[string]interface{} {
-	params := make(map[string]interface{})
-	for key, value := range pathParams {
-		params[key] = value
-	}
-	for key, value := range queryParams {
-		params[key] = value[0]
-	}
-	return params
-}
-
-func createStepsMap(stepsArray []interface{}) (map[string]interface{}, error) {
-	steps := make(map[string]interface{})
-	for _, v := range stepsArray {
-		stepsMap, ok := v.(map[string]interface{})
-		if !ok {
-			return nil, fmt.Errorf(INVALID_STEP_DEFINITION)
-		}
-		steps[stepsMap["name"].(string)] = stepsMap
-	}
-	return steps, nil
-}
-
-func fillResponseHeaders(responseHeaders http.Header, w http.ResponseWriter) {
-	for k, v := range responseHeaders {
-		w.Header().Set(k, v[0])
-	}
-}
-
 func processStep(currentStepKey string, w http.ResponseWriter, steps map[string]interface{}, input map[string]interface{}, stepOutputs map[string]interface{}, stepInput interface{}) (interface{}, string) {
 	log.Printf("Processing step: %s", currentStepKey)
 	var next string
 	var err error
 	step, ok := steps[currentStepKey]
 	if !ok {
-		return fmt.Errorf(INVALID_STEP_DEFINITION), "error"
+		return fmt.Errorf(helpers.INVALID_STEP_DEFINITION), "error"
 	}
 	stepMap, ok := step.(map[string]interface{})
 	if !ok {
-		return fmt.Errorf(INVALID_STEP_DEFINITION), "error"
+		return fmt.Errorf(helpers.INVALID_STEP_DEFINITION), "error"
 	}
 
 	switch (stepMap["type"]).(string) {
@@ -150,7 +121,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	var output interface{}
 	var stepInput interface{}
 	stepOutputs := make(map[string]interface{})
-	input := extractParams(pathParams, r.URL.Query())
+	input := helpers.ExtractParams(pathParams, r.URL.Query())
 
 	stepOutputs["request"] = input
 
@@ -162,7 +133,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currentStepKey := stepsArray[0].(map[string]interface{})["name"].(string)
-	steps, err := createStepsMap(stepsArray)
+	steps, err := helpers.CreateStepsMap(stepsArray)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -208,7 +179,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fillResponseHeaders(responseHeaders, w)
+	helpers.FillResponseHeaders(responseHeaders, w)
 
 	w.WriteHeader(responseCode)
 

@@ -41,7 +41,7 @@ func TransformBody(body interface{}, output map[string]interface{}) interface{} 
 	// if output is not array, transform
 	for key, value := range output {
 		if valueStr, ok := value.(string); ok {
-			if strings.HasPrefix(valueStr, "$.") {
+			if strings.HasPrefix(valueStr, "$") {
 				// get value from body
 				value, err := jsonpath.Get(valueStr, body)
 				if err != nil {

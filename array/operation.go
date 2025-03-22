@@ -21,15 +21,15 @@ func Run(ctx context.Context, stepMap map[string]interface{}, input map[string]i
 	log.Printf("next: %v", next)
 
 	// replace placeholders in input
-	inputMap, err := jsonpath.Get(inputString, stepOutputs)
+	inputArray, err := jsonpath.Get(inputString, stepOutputs)
 	if err != nil {
 		log.Printf("could not read value from input: %v", err)
 		return err.Error(), next, err
 	}
 
-	log.Printf("inputMap: %v", inputMap)
+	log.Printf("inputMap: %v", inputArray)
 
-	body := helpers.TransformBody(inputMap, output)
+	body := helpers.TransformBody(inputArray, output)
 
 	return body, next, nil
 }

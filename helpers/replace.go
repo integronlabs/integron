@@ -25,10 +25,8 @@ func Replace(input string, stepOutputs map[string]interface{}) (string, error) {
 	return input, nil
 }
 
-func TransformBody(body interface{}, output map[string]interface{}) interface{} {
-	// if output is array, go through each element and transform
+func TransformBody(body interface{}, output interface{}) interface{} {
 	if bodyArray, ok := body.([]interface{}); ok {
-
 		transformedBody := make([]interface{}, 0)
 		for _, bodyMap := range bodyArray {
 			transformed := TransformBody(bodyMap, output)
@@ -37,21 +35,37 @@ func TransformBody(body interface{}, output map[string]interface{}) interface{} 
 		return transformedBody
 	}
 
-	transformedBody := make(map[string]interface{})
-	// if output is not array, transform
-	for key, value := range output {
-		if valueStr, ok := value.(string); ok {
-			if strings.HasPrefix(valueStr, "$") {
-				// get value from body
-				value, err := jsonpath.Get(valueStr, body)
-				if err != nil {
-					log.Printf("could not read value from body: %v", err)
-				}
-				transformedBody[key] = value
-			} else {
-				transformedBody[key] = value
+	// if output is array, go through each element and transform
+	if outputArray, ok := output.([]interface{}); ok {
+
+		transformedBody := make([]interface{}, 0)
+		for _, outputMap := range outputArray {
+			transformed := TransformBody(body, outputMap)
+			transformedBody = append(transformedBody, transformed)
+		}
+		return transformedBody
+	}
+
+	if outputMap, ok := output.(map[string]interface{}); ok {
+		transformedBody := make(map[string]interface{})
+		// if output is not array, transform
+		for key, value := range outputMap {
+			transformedBody[key] = TransformBody(body, value)
+		}
+		return transformedBody
+	}
+
+	if valueStr, ok := output.(string); ok {
+		if strings.HasPrefix(valueStr, "$") {
+			// get value from body
+			value, err := jsonpath.Get(valueStr, body)
+			if err != nil {
+				log.Printf("could not read value from body: %v", err)
 			}
+			return value
+		} else {
+			return valueStr
 		}
 	}
-	return transformedBody
+	return output
 }

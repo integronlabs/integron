@@ -86,6 +86,8 @@ func processStep(currentStepKey string, w http.ResponseWriter, steps map[string]
 		http.Error(w, string(message), http.StatusInternalServerError)
 		return nil, "end"
 	}
+	log.Printf("Step %s completed", currentStepKey)
+	log.Printf("Step outputs: %v", stepOutputs[currentStepKey])
 	return stepOutputs[currentStepKey], next
 }
 

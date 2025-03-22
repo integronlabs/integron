@@ -8,15 +8,17 @@ import (
 const EXPECTED_NIL_GOT = "Expected nil, got %v"
 const EXPECTED_ERROR_GOT_NIL = "Expected error, got nil"
 const EXPECTED_BUT_GOT = "Expected %v, got %v"
+const VALID_OUTPUT = "$.message"
+const VALID_INPUT = "$.output"
 
 func TestRun(t *testing.T) {
 	ctx := context.Background()
 	stepMap := map[string]interface{}{
 		"next": "next",
 		"output": map[string]interface{}{
-			"message": "$.message",
+			"message": VALID_OUTPUT,
 		},
-		"input": "$.output",
+		"input": VALID_INPUT,
 	}
 	stepOutputs := map[string]interface{}{
 		"output": []interface{}{
@@ -52,9 +54,9 @@ func TestRunInvalidNextFormat(t *testing.T) {
 	stepMap := map[string]interface{}{
 		"next": 1,
 		"output": map[string]interface{}{
-			"message": "$.message",
+			"message": VALID_OUTPUT,
 		},
-		"input": "$.output",
+		"input": VALID_INPUT,
 	}
 	stepOutputs := map[string]interface{}{
 		"output": []interface{}{
@@ -84,7 +86,7 @@ func TestRunInvalidInputFormat(t *testing.T) {
 	stepMap := map[string]interface{}{
 		"next": "next",
 		"output": map[string]interface{}{
-			"message": "$.message",
+			"message": VALID_OUTPUT,
 		},
 		"input": 1,
 	}
@@ -116,7 +118,7 @@ func TestRunInvalidOutputFormat(t *testing.T) {
 	stepMap := map[string]interface{}{
 		"next":   "next",
 		"output": 1,
-		"input":  "$.output",
+		"input":  VALID_INPUT,
 	}
 	stepOutputs := map[string]interface{}{
 		"output": []interface{}{
@@ -146,9 +148,9 @@ func TestRunInvalidInputFormat2(t *testing.T) {
 	stepMap := map[string]interface{}{
 		"next": "next",
 		"output": map[string]interface{}{
-			"message": "$.message",
+			"message": VALID_OUTPUT,
 		},
-		"input": "$.output",
+		"input": VALID_INPUT,
 	}
 	stepOutputs := map[string]interface{}{
 		"output": 1,
@@ -169,12 +171,12 @@ func TestRunInvalidInputFormat2(t *testing.T) {
 	}
 }
 
-func TestRunInvalidOutputFormat2(t *testing.T) {
+func TestRunInvalidOutputFormat3(t *testing.T) {
 	ctx := context.Background()
 	stepMap := map[string]interface{}{
 		"next":   "next",
 		"output": 1,
-		"input":  "$.output",
+		"input":  VALID_INPUT,
 	}
 	stepOutputs := map[string]interface{}{
 		"output": []interface{}{
@@ -204,7 +206,7 @@ func TestRunInvalidInputFormat3(t *testing.T) {
 	stepMap := map[string]interface{}{
 		"next": "next",
 		"output": map[string]interface{}{
-			"message": "$.message",
+			"message": VALID_OUTPUT,
 		},
 		"input": "$.output[]",
 	}
@@ -234,7 +236,7 @@ func TestRunTransformArrayError(t *testing.T) {
 		"output": map[string]interface{}{
 			"message": "$.message[]",
 		},
-		"input": "$.output",
+		"input": VALID_INPUT,
 	}
 	stepOutputs := map[string]interface{}{
 		"output": []interface{}{

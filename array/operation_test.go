@@ -11,6 +11,14 @@ const EXPECTED_BUT_GOT = "Expected %v, got %v"
 const VALID_OUTPUT = "$.message"
 const VALID_INPUT = "$.output"
 
+var validOutputMap = map[string]interface{}{
+	"output": []interface{}{
+		map[string]interface{}{
+			"message": "world",
+		},
+	},
+}
+
 func TestRun(t *testing.T) {
 	ctx := context.Background()
 	stepMap := map[string]interface{}{
@@ -20,13 +28,7 @@ func TestRun(t *testing.T) {
 		},
 		"input": VALID_INPUT,
 	}
-	stepOutputs := map[string]interface{}{
-		"output": []interface{}{
-			map[string]interface{}{
-				"message": "world",
-			},
-		},
-	}
+	stepOutputs := validOutputMap
 
 	expectedOutput := []interface{}{
 		map[string]interface{}{
@@ -58,13 +60,7 @@ func TestRunInvalidNextFormat(t *testing.T) {
 		},
 		"input": VALID_INPUT,
 	}
-	stepOutputs := map[string]interface{}{
-		"output": []interface{}{
-			map[string]interface{}{
-				"message": "world",
-			},
-		},
-	}
+	stepOutputs := validOutputMap
 
 	expectedError := "invalid next format"
 
@@ -90,13 +86,7 @@ func TestRunInvalidInputFormat(t *testing.T) {
 		},
 		"input": 1,
 	}
-	stepOutputs := map[string]interface{}{
-		"output": []interface{}{
-			map[string]interface{}{
-				"message": "world",
-			},
-		},
-	}
+	stepOutputs := validOutputMap
 
 	expectedError := "invalid input format"
 
@@ -120,13 +110,7 @@ func TestRunInvalidOutputFormat(t *testing.T) {
 		"output": 1,
 		"input":  VALID_INPUT,
 	}
-	stepOutputs := map[string]interface{}{
-		"output": []interface{}{
-			map[string]interface{}{
-				"message": "world",
-			},
-		},
-	}
+	stepOutputs := validOutputMap
 
 	expectedError := "invalid output format"
 

@@ -4,6 +4,9 @@ import (
 	"testing"
 )
 
+const EXPECTED_ERROR_GOT_NIL = "Expected error, got nil"
+const EXPECTED_NIL_GOT = "Expected nil, got %v"
+
 func TestCreateStepsMap(t *testing.T) {
 	stepsArray := []interface{}{
 		map[string]interface{}{
@@ -31,10 +34,10 @@ func TestCreateStepsMapInvalidStepDefinition(t *testing.T) {
 	}
 	steps, err := CreateStepsMap(stepsArray)
 	if err == nil {
-		t.Errorf("Expected error, got nil")
+		t.Error(EXPECTED_ERROR_GOT_NIL)
 	}
 	if steps != nil {
-		t.Errorf("Expected nil, got %v", steps)
+		t.Errorf(EXPECTED_NIL_GOT, steps)
 	}
 }
 
@@ -44,10 +47,10 @@ func TestCreateStepsMapInvalidStepDefinition2(t *testing.T) {
 	}
 	steps, err := CreateStepsMap(stepsArray)
 	if err == nil {
-		t.Errorf("Expected error, got nil")
+		t.Error(EXPECTED_ERROR_GOT_NIL)
 	}
 	if steps != nil {
-		t.Errorf("Expected nil, got %v", steps)
+		t.Errorf(EXPECTED_NIL_GOT, steps)
 	}
 }
 
@@ -71,10 +74,10 @@ func TestCreateStepsMapInvalidStepDefinition4(t *testing.T) {
 	}
 	steps, err := CreateStepsMap(stepsArray)
 	if err == nil {
-		t.Errorf("Expected error, got nil")
+		t.Error(EXPECTED_ERROR_GOT_NIL)
 	}
 	if steps != nil {
-		t.Errorf("Expected nil, got %v", steps)
+		t.Errorf(EXPECTED_NIL_GOT, steps)
 	}
 }
 
@@ -90,10 +93,10 @@ func TestCreateStepsMapInvalidStepDefinition5(t *testing.T) {
 	}
 	steps, err := CreateStepsMap(stepsArray)
 	if err == nil {
-		t.Errorf("Expected error, got nil")
+		t.Error(EXPECTED_ERROR_GOT_NIL)
 	}
 	if steps != nil {
-		t.Errorf("Expected nil, got %v", steps)
+		t.Errorf(EXPECTED_NIL_GOT, steps)
 	}
 }
 
@@ -109,9 +112,9 @@ func TestCreateStepsMapInvalidStepDefinition6(t *testing.T) {
 	}
 	steps, err := CreateStepsMap(stepsArray)
 	if err == nil {
-		t.Errorf("Expected error, got nil")
+		t.Error(EXPECTED_ERROR_GOT_NIL)
 	}
 	if steps != nil {
-		t.Errorf("Expected nil, got %v", steps)
+		t.Errorf(EXPECTED_NIL_GOT, steps)
 	}
 }

@@ -17,7 +17,9 @@ func (m *mockResponseWriter) Write([]byte) (int, error) {
 	return 0, nil
 }
 
-func (m *mockResponseWriter) WriteHeader(int) {}
+func (m *mockResponseWriter) WriteHeader(int) {
+	// mock function
+}
 
 func TestFillResponseHeaders(t *testing.T) {
 	responseHeaders := map[string][]string{"key1": {"value1"}}

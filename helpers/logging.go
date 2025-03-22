@@ -8,7 +8,7 @@ import (
 )
 
 func SetupLogging() {
-	logrus.SetFormatter(&logrus.JSONFormatter{})
+	// logrus.SetFormatter(&logrus.JSONFormatter{})
 	logrus.SetOutput(logrus.StandardLogger().Out)
 	logrus.SetReportCaller(true)
 

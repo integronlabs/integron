@@ -47,11 +47,11 @@ func transformBodyMap(outputMap map[string]interface{}, body interface{}) (map[s
 	return transformedBody, nil
 }
 
-func transformBodyString(output string, body interface{}) (string, error) {
+func transformBodyString(output string, body interface{}) (interface{}, error) {
 	if strings.HasPrefix(output, "$") {
 		// get value from body
 		value, err := jsonpath.Get(output, body)
-		return fmt.Sprintf("%v", value), err
+		return value, err
 	} else {
 		value, err := Replace(output, body)
 		return value, err

@@ -1,4 +1,4 @@
-package http
+package array
 
 import (
 	"fmt"
@@ -13,9 +13,21 @@ import (
 func Run(ctx context.Context, stepMap map[string]interface{}, stepOutputs map[string]interface{}) (interface{}, string, error) {
 	// get values
 
-	next := stepMap["next"].(string)
-	inputString := stepMap["input"].(string)
-	output := stepMap["output"].(map[string]interface{})
+	next, ok := stepMap["next"].(string)
+	if !ok {
+		err := fmt.Errorf("invalid next format")
+		return err.Error(), "error", err
+	}
+	inputString, ok := stepMap["input"].(string)
+	if !ok {
+		err := fmt.Errorf("invalid input format")
+		return err.Error(), "error", err
+	}
+	output, ok := stepMap["output"].(map[string]interface{})
+	if !ok {
+		err := fmt.Errorf("invalid output format")
+		return err.Error(), "error", err
+	}
 
 	logrus.Infof("inputString: %v", inputString)
 	logrus.Infof("output: %v", output)
@@ -25,7 +37,7 @@ func Run(ctx context.Context, stepMap map[string]interface{}, stepOutputs map[st
 	inputMap, err := jsonpath.Get(inputString, stepOutputs)
 	if err != nil {
 		logrus.Errorf("could not read value from input: %v", err)
-		return err.Error(), next, err
+		return err.Error(), "error", err
 	}
 
 	logrus.Infof("inputMap: %v", inputMap)
@@ -40,7 +52,7 @@ func Run(ctx context.Context, stepMap map[string]interface{}, stepOutputs map[st
 
 	if err != nil {
 		logrus.Errorf("could not transform body: %v", err)
-		return body, next, err
+		return err.Error(), "error", err
 	}
 
 	return body, next, nil

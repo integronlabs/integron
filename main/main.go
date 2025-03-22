@@ -65,22 +65,24 @@ func processStep(currentStepKey string, w http.ResponseWriter, steps map[string]
 		return fmt.Errorf(helpers.INVALID_STEP_DEFINITION), "error"
 	}
 
+	var stepOutput interface{}
+
 	switch (stepMap["type"]).(string) {
 	case "http":
 		client := http.Client{}
-		stepOutputs[currentStepKey], next, err = httpOperation.Run(ctx, &client, stepMap, stepOutputs)
+		stepOutput, next, err = httpOperation.Run(ctx, &client, stepMap, stepOutputs)
 		if err != nil {
-			return err, "error"
+			return err.Error(), "error"
 		}
 	case "array":
-		stepOutputs[currentStepKey], next, err = arrayOperation.Run(ctx, stepMap, stepOutputs)
+		stepOutput, next, err = arrayOperation.Run(ctx, stepMap, stepOutputs)
 		if err != nil {
-			return err, "error"
+			return err.Error(), "error"
 		}
 	case "object":
-		stepOutputs[currentStepKey], next, err = objectOperation.Run(ctx, stepMap, stepOutputs)
+		stepOutput, next, err = objectOperation.Run(ctx, stepMap, stepOutputs)
 		if err != nil {
-			return err, "error"
+			return err.Error(), "error"
 		}
 	case "error":
 		message, _ := json.Marshal(map[string]interface{}{"message": stepInput})
@@ -89,7 +91,7 @@ func processStep(currentStepKey string, w http.ResponseWriter, steps map[string]
 	}
 	logrus.Infof("Step %s completed", currentStepKey)
 	logrus.Infof("Step outputs: %v", stepOutputs[currentStepKey])
-	return stepOutputs[currentStepKey], next
+	return stepOutput, next
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {

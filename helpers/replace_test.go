@@ -7,6 +7,9 @@ import (
 const HELLO_WORLD = "Hello, world!"
 const HELLO_NAME = "Hello, $.name!"
 
+const EXPECTED_BUT_GOT = "Expected %v, got %v"
+const INVALID_JSON_PATH = "$.phoneNumbers[].type"
+
 func TestReplace(t *testing.T) {
 	// replace json path placeholders with values
 	input := HELLO_NAME
@@ -19,7 +22,7 @@ func TestReplace(t *testing.T) {
 		t.Errorf(EXPECTED_NIL_GOT, err)
 	}
 	if result != expected {
-		t.Errorf("Expected %v, got %v", expected, result)
+		t.Errorf(EXPECTED_BUT_GOT, expected, result)
 	}
 }
 
@@ -33,7 +36,7 @@ func TestReplaceInvalidJsonPath(t *testing.T) {
 		t.Error(EXPECTED_ERROR_GOT_NIL)
 	}
 	if result != expected {
-		t.Errorf("Expected %v, got %v", expected, result)
+		t.Errorf(EXPECTED_BUT_GOT, expected, result)
 	}
 }
 
@@ -49,7 +52,7 @@ func TestReplaceInvalidJsonPath1(t *testing.T) {
 		t.Error(EXPECTED_ERROR_GOT_NIL)
 	}
 	if result != expected {
-		t.Errorf("Expected %v, got %v", expected, result)
+		t.Errorf(EXPECTED_BUT_GOT, expected, result)
 	}
 }
 
@@ -73,11 +76,11 @@ func TestTransformArray(t *testing.T) {
 		t.Errorf(EXPECTED_NIL_GOT, err)
 	}
 	if len(result) != len(expected) {
-		t.Errorf("Expected %v, got %v", expected, result)
+		t.Errorf(EXPECTED_BUT_GOT, expected, result)
 	}
 	for i := range result {
 		if result[i].(map[string]interface{})["message"] != expected[i]["message"] {
-			t.Errorf("Expected %v, got %v", expected, result)
+			t.Errorf(EXPECTED_BUT_GOT, expected, result)
 		}
 	}
 }
@@ -96,11 +99,11 @@ func TestTransformArrayInvalidInputFormat(t *testing.T) {
 		t.Error(EXPECTED_ERROR_GOT_NIL)
 	}
 	if len(result) != len(expected) {
-		t.Errorf("Expected %v, got %v", expected, result)
+		t.Errorf(EXPECTED_BUT_GOT, expected, result)
 	}
 	for i := range result {
 		if result[i].(map[string]interface{})["message"] != expected[i]["message"] {
-			t.Errorf("Expected %v, got %v", expected, result)
+			t.Errorf(EXPECTED_BUT_GOT, expected, result)
 		}
 	}
 }
@@ -113,7 +116,7 @@ func TestTransformArrayInvalidOutputFormat(t *testing.T) {
 		},
 	}
 	output := map[string]interface{}{
-		"message": "$.phoneNumbers[].type",
+		"message": INVALID_JSON_PATH,
 	}
 	expected := []interface{}{}
 	result, err := TransformArray(input, output)
@@ -121,7 +124,7 @@ func TestTransformArrayInvalidOutputFormat(t *testing.T) {
 		t.Error(EXPECTED_ERROR_GOT_NIL)
 	}
 	if len(result) != len(expected) {
-		t.Errorf("Expected %v, got %v", expected, result)
+		t.Errorf(EXPECTED_BUT_GOT, expected, result)
 	}
 }
 
@@ -141,7 +144,7 @@ func TestTransformBody(t *testing.T) {
 		t.Errorf(EXPECTED_NIL_GOT, err)
 	}
 	if result.(map[string]interface{})["message"] != expected["message"] {
-		t.Errorf("Expected %v, got %v", expected, result)
+		t.Errorf(EXPECTED_BUT_GOT, expected, result)
 	}
 }
 
@@ -157,7 +160,7 @@ func TestTransformBodyInvalidInputFormat(t *testing.T) {
 		t.Error(EXPECTED_ERROR_GOT_NIL)
 	}
 	if result.(map[string]interface{})["message"] != expected["message"] {
-		t.Errorf("Expected %v, got %v", expected, result)
+		t.Errorf(EXPECTED_BUT_GOT, expected, result)
 	}
 }
 
@@ -167,7 +170,7 @@ func TestTransformBodyInvalidOutputFormat(t *testing.T) {
 		"name": "world",
 	}
 	output := map[string]interface{}{
-		"message": "$.phoneNumbers[].type",
+		"message": INVALID_JSON_PATH,
 	}
 	expected := map[string]interface{}{}
 	result, err := TransformBody(input, output)
@@ -175,7 +178,7 @@ func TestTransformBodyInvalidOutputFormat(t *testing.T) {
 		t.Error(EXPECTED_ERROR_GOT_NIL)
 	}
 	if result.(map[string]interface{})["message"] != expected["message"] {
-		t.Errorf("Expected %v, got %v", expected, result)
+		t.Errorf(EXPECTED_BUT_GOT, expected, result)
 	}
 }
 
@@ -199,7 +202,7 @@ func TestTransformBodyOutputArray(t *testing.T) {
 		t.Errorf(EXPECTED_NIL_GOT, err)
 	}
 	if result.([]interface{})[0].(map[string]interface{})["message"] != expected[0].(map[string]interface{})["message"] {
-		t.Errorf("Expected %v, got %v", expected, result)
+		t.Errorf(EXPECTED_BUT_GOT, expected, result)
 	}
 }
 
@@ -217,7 +220,7 @@ func TestTransformBodyOutputArrayInvalidInputFormat(t *testing.T) {
 		t.Error(EXPECTED_ERROR_GOT_NIL)
 	}
 	if len(result.([]interface{})) != len(expected) {
-		t.Errorf("Expected %v, got %v", expected, result)
+		t.Errorf(EXPECTED_BUT_GOT, expected, result)
 	}
 }
 
@@ -228,7 +231,7 @@ func TestTransformBodyOutputArrayInvalidOutputFormat(t *testing.T) {
 	}
 	output := []interface{}{
 		map[string]interface{}{
-			"message": "$.phoneNumbers[].type",
+			"message": INVALID_JSON_PATH,
 		},
 	}
 	expected := []interface{}{}
@@ -237,7 +240,7 @@ func TestTransformBodyOutputArrayInvalidOutputFormat(t *testing.T) {
 		t.Error(EXPECTED_ERROR_GOT_NIL)
 	}
 	if len(result.([]interface{})) != len(expected) {
-		t.Errorf("Expected %v, got %v", expected, result)
+		t.Errorf(EXPECTED_BUT_GOT, expected, result)
 	}
 }
 
@@ -253,6 +256,6 @@ func TestTransformBodyOutputInteger(t *testing.T) {
 		t.Errorf(EXPECTED_NIL_GOT, err)
 	}
 	if result != expected {
-		t.Errorf("Expected %v, got %v", expected, result)
+		t.Errorf(EXPECTED_BUT_GOT, expected, result)
 	}
 }

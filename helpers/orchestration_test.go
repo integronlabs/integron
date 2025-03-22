@@ -18,7 +18,7 @@ func TestCreateStepsMap(t *testing.T) {
 	}
 	steps, err := CreateStepsMap(stepsArray)
 	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
+		t.Errorf(EXPECTED_NIL_GOT, err)
 	}
 	if len(steps) != 2 {
 		t.Errorf("Expected 2 steps, got %d", len(steps))
@@ -58,7 +58,7 @@ func TestCreateStepsMapInvalidStepDefinition3(t *testing.T) {
 	stepsArray := []interface{}{}
 	steps, err := CreateStepsMap(stepsArray)
 	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
+		t.Errorf(EXPECTED_NIL_GOT, err)
 	}
 	if len(steps) != 0 {
 		t.Errorf("Expected 0 steps, got %d", len(steps))

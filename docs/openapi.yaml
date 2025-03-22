@@ -62,10 +62,11 @@ paths:
             type: http
             url: 'https://dogapi.dog/api/v2/facts?limit=$.request.amount'
             method: GET
-            '200':
-              output:
-                response: $.body
-              next: "arrayTransform"
+            responses:
+              '200':
+                output:
+                  response: $.body
+                next: "arrayTransform"
           - name: arrayTransform
             type: array
             input: $.dogFacts.response.data

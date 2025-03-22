@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/integronlabs/integron/helpers"
 
@@ -20,34 +19,10 @@ import (
 	"github.com/getkin/kin-openapi/routers/gorillamux"
 	"github.com/swaggest/swgui/v5emb"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/sirupsen/logrus"
 )
-
-var (
-	httpRequestsTotal = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "http_requests_total",
-			Help: "Total number of HTTP requests",
-		},
-		[]string{"path"},
-	)
-	httpRequestDuration = prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "http_request_duration_seconds",
-			Help:    "Duration of HTTP requests",
-			Buckets: prometheus.DefBuckets,
-		},
-		[]string{"path"},
-	)
-)
-
-func init() {
-	prometheus.MustRegister(httpRequestsTotal)
-	prometheus.MustRegister(httpRequestDuration)
-}
 
 var router routers.Router
 var ctx context.Context
@@ -95,12 +70,6 @@ func processStep(currentStepKey string, w http.ResponseWriter, steps map[string]
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
-	defer func() {
-		duration := time.Since(start).Seconds()
-		httpRequestsTotal.WithLabelValues(r.URL.Path).Inc()
-		httpRequestDuration.WithLabelValues(r.URL.Path).Observe(duration)
-	}()
 	// Find route
 	route, pathParams, err := router.FindRoute(r)
 	if err != nil {

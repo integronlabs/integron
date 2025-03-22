@@ -17,7 +17,12 @@ func Run(ctx context.Context, stepMap map[string]interface{}, stepOutputs map[st
 	log.Printf("output: %v", output)
 	log.Printf("next: %v", next)
 
-	body := helpers.TransformBody(stepOutputs, output)
+	body, err := helpers.TransformBody(stepOutputs, output)
+
+	if err != nil {
+		log.Printf("could not transform body: %v", err)
+		return body, next, err
+	}
 
 	return body, next, nil
 }

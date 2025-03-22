@@ -36,7 +36,12 @@ func Run(ctx context.Context, stepMap map[string]interface{}, stepOutputs map[st
 		return err.Error(), "error", err
 	}
 
-	body := helpers.TransformArray(inputArray, output)
+	body, err := helpers.TransformArray(inputArray, output)
+
+	if err != nil {
+		log.Printf("could not transform body: %v", err)
+		return body, next, err
+	}
 
 	return body, next, nil
 }

@@ -53,10 +53,7 @@ func getActions(stepMap map[string]interface{}, statusCodeStr string) (map[strin
 }
 
 func httpRequest(ctx context.Context, client *http.Client, method string, url string, requestBodyString string, headers map[string]interface{}, stepOutputs map[string]interface{}) (*http.Response, error) {
-	url, err := helpers.Replace(url, stepOutputs)
-	if err != nil {
-		return nil, err
-	}
+	url = helpers.Replace(url, stepOutputs)
 
 	httpRequest, err := http.NewRequestWithContext(ctx, method, url, strings.NewReader(requestBodyString))
 	if err != nil {
@@ -64,10 +61,7 @@ func httpRequest(ctx context.Context, client *http.Client, method string, url st
 	}
 	// set headers
 	for key, value := range headers {
-		value, err := helpers.Replace(value.(string), stepOutputs)
-		if err != nil {
-			return nil, err
-		}
+		value := helpers.Replace(value.(string), stepOutputs)
 		httpRequest.Header.Set(key, value)
 	}
 	start := time.Now()
@@ -93,7 +87,10 @@ func Run(ctx context.Context, client *http.Client, stepMap map[string]interface{
 	requestBodyMap, _ := stepMap["body"].(map[string]interface{})
 	headers, _ := stepMap["headers"].(map[string]interface{})
 
-	requestBody := helpers.TransformBody(stepOutputs, requestBodyMap)
+	requestBody, err := helpers.TransformBody(stepOutputs, requestBodyMap)
+	if err != nil {
+		return err.Error(), "error", nil
+	}
 	requestBodyJson, _ := json.Marshal(requestBody)
 	requestBodyString := string(requestBodyJson)
 
@@ -124,7 +121,11 @@ func Run(ctx context.Context, client *http.Client, stepMap map[string]interface{
 		return err.Error(), "error", nil
 	}
 
-	body := helpers.TransformBody(responseMap, outputMap)
+	body, err := helpers.TransformBody(responseMap, outputMap)
+
+	if err != nil {
+		return err.Error(), "error", nil
+	}
 
 	return body, next, nil
 }

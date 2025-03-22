@@ -76,7 +76,8 @@ paths:
           - name: responseMarshal
             type: object
             output:
-              data: $.arrayTransform
+              body:
+                data: $.arrayTransform
             next: ""
           - name: error
             type: error

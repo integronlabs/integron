@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -23,6 +22,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -52,7 +53,7 @@ var router routers.Router
 var ctx context.Context
 
 func processStep(currentStepKey string, w http.ResponseWriter, steps map[string]interface{}, stepOutputs map[string]interface{}, stepInput interface{}) (interface{}, string) {
-	log.Printf("Processing step: %s", currentStepKey)
+	logrus.Infof("Processing step: %s", currentStepKey)
 	var next string
 	var err error
 	step, ok := steps[currentStepKey]
@@ -86,8 +87,8 @@ func processStep(currentStepKey string, w http.ResponseWriter, steps map[string]
 		http.Error(w, string(message), http.StatusInternalServerError)
 		return nil, "end"
 	}
-	log.Printf("Step %s completed", currentStepKey)
-	log.Printf("Step outputs: %v", stepOutputs[currentStepKey])
+	logrus.Infof("Step %s completed", currentStepKey)
+	logrus.Infof("Step outputs: %v", stepOutputs[currentStepKey])
 	return stepOutputs[currentStepKey], next
 }
 
@@ -101,7 +102,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	// Find route
 	route, pathParams, err := router.FindRoute(r)
 	if err != nil {
-		fmt.Println(err)
 		http.Error(w, "Method not found", http.StatusNotFound)
 		return
 	}
@@ -155,16 +155,30 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		stepInput = stepOutputs[currentStepKey]
 		currentStepKey = next
 	}
+
+	outputMap, ok := output.(map[string]interface{})
+	if !ok {
+		http.Error(w, "Invalid output format", http.StatusInternalServerError)
+		return
+	}
+	responseCode := 200
+	if status, ok := outputMap["status"].(float64); ok {
+		responseCode = int(status)
+	}
+	jsonBody, _ := json.Marshal(outputMap["body"])
+	responseBody := []byte(jsonBody)
+
 	responseHeaders := http.Header{
 		"Content-Type":                 []string{"application/json"},
 		"Access-Control-Allow-Origin":  []string{"*"},
 		"Access-Control-Allow-Methods": []string{"GET, POST, PUT, DELETE"},
 		"Access-Control-Allow-Headers": []string{"Content-Type"},
 	}
-	responseCode := 200
-	jsonBody, _ := json.Marshal(output)
-	fmt.Println(string(jsonBody))
-	responseBody := []byte(jsonBody)
+	if headers, ok := outputMap["headers"].(map[string]interface{}); ok {
+		for key, value := range headers {
+			responseHeaders.Set(key, value.(string))
+		}
+	}
 
 	// Validate response
 	responseValidationInput := &openapi3filter.ResponseValidationInput{
@@ -189,6 +203,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	helpers.SetupLogging()
+
 	openapiSpec := flag.String("spec", "docs/openapi.yaml", "path to the openapi spec")
 
 	flag.Parse()
@@ -225,5 +241,5 @@ func main() {
 
 	http.Handle("/metrics", promhttp.Handler())
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	logrus.Fatal(http.ListenAndServe(":8080", nil))
 }

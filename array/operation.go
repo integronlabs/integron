@@ -2,12 +2,12 @@ package http
 
 import (
 	"fmt"
-	"log"
 
 	"context"
 
 	"github.com/PaesslerAG/jsonpath"
 	"github.com/integronlabs/integron/helpers"
+	"github.com/sirupsen/logrus"
 )
 
 func Run(ctx context.Context, stepMap map[string]interface{}, stepOutputs map[string]interface{}) (interface{}, string, error) {
@@ -17,18 +17,18 @@ func Run(ctx context.Context, stepMap map[string]interface{}, stepOutputs map[st
 	inputString := stepMap["input"].(string)
 	output := stepMap["output"].(map[string]interface{})
 
-	log.Printf("inputString: %v", inputString)
-	log.Printf("output: %v", output)
-	log.Printf("next: %v", next)
+	logrus.Infof("inputString: %v", inputString)
+	logrus.Infof("output: %v", output)
+	logrus.Infof("next: %v", next)
 
 	// replace placeholders in input
 	inputMap, err := jsonpath.Get(inputString, stepOutputs)
 	if err != nil {
-		log.Printf("could not read value from input: %v", err)
+		logrus.Errorf("could not read value from input: %v", err)
 		return err.Error(), next, err
 	}
 
-	log.Printf("inputMap: %v", inputMap)
+	logrus.Infof("inputMap: %v", inputMap)
 
 	inputArray, ok := inputMap.([]interface{})
 	if !ok {
@@ -39,7 +39,7 @@ func Run(ctx context.Context, stepMap map[string]interface{}, stepOutputs map[st
 	body, err := helpers.TransformArray(inputArray, output)
 
 	if err != nil {
-		log.Printf("could not transform body: %v", err)
+		logrus.Errorf("could not transform body: %v", err)
 		return body, next, err
 	}
 

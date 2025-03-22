@@ -1,11 +1,10 @@
 package http
 
 import (
-	"log"
-
 	"context"
 
 	"github.com/integronlabs/integron/helpers"
+	"github.com/sirupsen/logrus"
 )
 
 func Run(ctx context.Context, stepMap map[string]interface{}, stepOutputs map[string]interface{}) (interface{}, string, error) {
@@ -14,13 +13,13 @@ func Run(ctx context.Context, stepMap map[string]interface{}, stepOutputs map[st
 	next := stepMap["next"].(string)
 	output := stepMap["output"].(map[string]interface{})
 
-	log.Printf("output: %v", output)
-	log.Printf("next: %v", next)
+	logrus.Infof("output: %v", output)
+	logrus.Infof("next: %v", next)
 
 	body, err := helpers.TransformBody(stepOutputs, output)
 
 	if err != nil {
-		log.Printf("could not transform body: %v", err)
+		logrus.Errorf("could not transform body: %v", err)
 		return body, next, err
 	}
 

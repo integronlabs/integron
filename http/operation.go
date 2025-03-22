@@ -53,7 +53,10 @@ func getActions(stepMap map[string]interface{}, statusCodeStr string) (map[strin
 }
 
 func httpRequest(ctx context.Context, client *http.Client, method string, url string, requestBodyString string, headers map[string]interface{}, stepOutputs map[string]interface{}) (*http.Response, error) {
-	url = helpers.Replace(url, stepOutputs)
+	url, err := helpers.Replace(url, stepOutputs)
+	if err != nil {
+		return nil, err
+	}
 
 	httpRequest, err := http.NewRequestWithContext(ctx, method, url, strings.NewReader(requestBodyString))
 	if err != nil {
@@ -61,7 +64,10 @@ func httpRequest(ctx context.Context, client *http.Client, method string, url st
 	}
 	// set headers
 	for key, value := range headers {
-		value := helpers.Replace(value.(string), stepOutputs)
+		value, err := helpers.Replace(value.(string), stepOutputs)
+		if err != nil {
+			return nil, err
+		}
 		httpRequest.Header.Set(key, value)
 	}
 	start := time.Now()

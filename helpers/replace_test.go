@@ -11,7 +11,10 @@ func TestReplace(t *testing.T) {
 		"name": "world",
 	}
 	expected := "Hello, world!"
-	result := Replace(input, values)
+	result, err := Replace(input, values)
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
 	if result != expected {
 		t.Errorf("Expected %v, got %v", expected, result)
 	}
@@ -21,8 +24,27 @@ func TestReplaceInvalidJsonPath(t *testing.T) {
 	// replace json path placeholders with values
 	input := "Hello, $.name!"
 	values := map[string]interface{}{}
-	expected := "Hello, <nil>!"
-	result := Replace(input, values)
+	expected := "unknown key name"
+	result, err := Replace(input, values)
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+	if result != expected {
+		t.Errorf("Expected %v, got %v", expected, result)
+	}
+}
+
+func TestReplaceInvalidJsonPath1(t *testing.T) {
+	// replace json path placeholders with values
+	input := "Hello, $.name[]!"
+	values := map[string]interface{}{
+		"name": "world",
+	}
+	expected := "parsing error: $.name[]	:1:8 - 1:9 unexpected \"]\" while scanning extensions"
+	result, err := Replace(input, values)
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
 	if result != expected {
 		t.Errorf("Expected %v, got %v", expected, result)
 	}
@@ -65,14 +87,10 @@ func TestTransformArrayInvalidInputFormat(t *testing.T) {
 	output := map[string]interface{}{
 		"message": "Hello, $.name!",
 	}
-	expected := []map[string]interface{}{
-		{
-			"message": "Hello, <nil>!",
-		},
-	}
+	expected := []map[string]interface{}{}
 	result, err := TransformArray(input, output)
-	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
+	if err == nil {
+		t.Errorf("Expected error, got nil")
 	}
 	if len(result) != len(expected) {
 		t.Errorf("Expected %v, got %v", expected, result)
@@ -130,12 +148,10 @@ func TestTransformBodyInvalidInputFormat(t *testing.T) {
 	output := map[string]interface{}{
 		"message": "Hello, $.name!",
 	}
-	expected := map[string]interface{}{
-		"message": "Hello, <nil>!",
-	}
+	expected := map[string]interface{}{}
 	result, err := TransformBody(input, output)
-	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
+	if err == nil {
+		t.Errorf("Expected error, got nil")
 	}
 	if result.(map[string]interface{})["message"] != expected["message"] {
 		t.Errorf("Expected %v, got %v", expected, result)
@@ -192,16 +208,12 @@ func TestTransformBodyOutputArrayInvalidInputFormat(t *testing.T) {
 			"message": "Hello, $.name!",
 		},
 	}
-	expected := []interface{}{
-		map[string]interface{}{
-			"message": "Hello, <nil>!",
-		},
-	}
+	expected := []interface{}{}
 	result, err := TransformBody(input, output)
-	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
+	if err == nil {
+		t.Errorf("Expected error, got nil")
 	}
-	if result.([]interface{})[0].(map[string]interface{})["message"] != expected[0].(map[string]interface{})["message"] {
+	if len(result.([]interface{})) != len(expected) {
 		t.Errorf("Expected %v, got %v", expected, result)
 	}
 }

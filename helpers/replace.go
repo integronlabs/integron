@@ -8,16 +8,19 @@ import (
 	"github.com/PaesslerAG/jsonpath"
 )
 
-func Replace(input string, stepOutputs interface{}) string {
+func Replace(input string, stepOutputs interface{}) (string, error) {
 	re := regexp.MustCompile(`\$\.[a-zA-Z0-9_\[\]\.]+`)
 	matches := re.FindAllString(input, -1)
 
 	for _, match := range matches {
-		value, _ := jsonpath.Get(match, stepOutputs)
+		value, err := jsonpath.Get(match, stepOutputs)
+		if err != nil {
+			return err.Error(), err
+		}
 		input = strings.ReplaceAll(input, match, fmt.Sprintf("%v", value))
 	}
 
-	return input
+	return input, nil
 }
 
 func TransformBody(body interface{}, output interface{}) (interface{}, error) {
@@ -55,8 +58,8 @@ func TransformBody(body interface{}, output interface{}) (interface{}, error) {
 			value, err := jsonpath.Get(valueStr, body)
 			return value, err
 		} else {
-			value := Replace(valueStr, body)
-			return value, nil
+			value, err := Replace(valueStr, body)
+			return value, err
 		}
 	}
 	return output, nil

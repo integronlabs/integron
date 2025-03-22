@@ -23,44 +23,54 @@ func Replace(input string, stepOutputs interface{}) (string, error) {
 	return input, nil
 }
 
+func transformBodyArray(outputArray []interface{}, body interface{}) ([]interface{}, error) {
+	transformedBody := make([]interface{}, 0)
+	for _, outputMap := range outputArray {
+		transformed, err := TransformBody(body, outputMap)
+		if err != nil {
+			return transformedBody, err
+		}
+		transformedBody = append(transformedBody, transformed)
+	}
+	return transformedBody, nil
+}
+
+func transformBodyMap(outputMap map[string]interface{}, body interface{}) (map[string]interface{}, error) {
+	transformedBody := make(map[string]interface{})
+	for key, value := range outputMap {
+		transformed, err := TransformBody(body, value)
+		if err != nil {
+			return transformedBody, err
+		}
+		transformedBody[key] = transformed
+	}
+	return transformedBody, nil
+}
+
+func transformBodyString(output string, body interface{}) (string, error) {
+	if strings.HasPrefix(output, "$") {
+		// get value from body
+		value, err := jsonpath.Get(output, body)
+		return fmt.Sprintf("%v", value), err
+	} else {
+		value, err := Replace(output, body)
+		return value, err
+	}
+}
+
 func TransformBody(body interface{}, output interface{}) (interface{}, error) {
 
 	// if output is array, go through each element and transform
 	if outputArray, ok := output.([]interface{}); ok {
-
-		transformedBody := make([]interface{}, 0)
-		for _, outputMap := range outputArray {
-			transformed, err := TransformBody(body, outputMap)
-			if err != nil {
-				return transformedBody, err
-			}
-			transformedBody = append(transformedBody, transformed)
-		}
-		return transformedBody, nil
+		return transformBodyArray(outputArray, body)
 	}
 
 	if outputMap, ok := output.(map[string]interface{}); ok {
-		transformedBody := make(map[string]interface{})
-		// if output is not array, transform
-		for key, value := range outputMap {
-			transformed, err := TransformBody(body, value)
-			if err != nil {
-				return transformedBody, err
-			}
-			transformedBody[key] = transformed
-		}
-		return transformedBody, nil
+		return transformBodyMap(outputMap, body)
 	}
 
 	if valueStr, ok := output.(string); ok {
-		if strings.HasPrefix(valueStr, "$") {
-			// get value from body
-			value, err := jsonpath.Get(valueStr, body)
-			return value, err
-		} else {
-			value, err := Replace(valueStr, body)
-			return value, err
-		}
+		return transformBodyString(valueStr, body)
 	}
 	return output, nil
 }

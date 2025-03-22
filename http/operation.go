@@ -86,7 +86,7 @@ func httpRequest(ctx context.Context, client *http.Client, method string, url st
 	return response, nil
 }
 
-func Run(ctx context.Context, client *http.Client, stepMap map[string]interface{}, input map[string]interface{}, stepOutputs map[string]interface{}) (interface{}, string, error) {
+func Run(ctx context.Context, client *http.Client, stepMap map[string]interface{}, stepOutputs map[string]interface{}) (interface{}, string, error) {
 	// get values
 	method, _ := stepMap["method"].(string)
 	url, _ := stepMap["url"].(string)

@@ -26,14 +26,6 @@ func Replace(input string, stepOutputs map[string]interface{}) (string, error) {
 }
 
 func TransformBody(body interface{}, output interface{}) interface{} {
-	if bodyArray, ok := body.([]interface{}); ok {
-		transformedBody := make([]interface{}, 0)
-		for _, bodyMap := range bodyArray {
-			transformed := TransformBody(bodyMap, output)
-			transformedBody = append(transformedBody, transformed)
-		}
-		return transformedBody
-	}
 
 	// if output is array, go through each element and transform
 	if outputArray, ok := output.([]interface{}); ok {
@@ -68,4 +60,13 @@ func TransformBody(body interface{}, output interface{}) interface{} {
 		}
 	}
 	return output
+}
+
+func TransformArray(inputArray []interface{}, output map[string]interface{}) []interface{} {
+	transformedArray := make([]interface{}, 0)
+	for _, inputMap := range inputArray {
+		transformed := TransformBody(inputMap, output)
+		transformedArray = append(transformedArray, transformed)
+	}
+	return transformedArray
 }

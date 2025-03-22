@@ -51,7 +51,7 @@ func init() {
 var router routers.Router
 var ctx context.Context
 
-func processStep(currentStepKey string, w http.ResponseWriter, steps map[string]interface{}, input map[string]interface{}, stepOutputs map[string]interface{}, stepInput interface{}) (interface{}, string) {
+func processStep(currentStepKey string, w http.ResponseWriter, steps map[string]interface{}, stepOutputs map[string]interface{}, stepInput interface{}) (interface{}, string) {
 	log.Printf("Processing step: %s", currentStepKey)
 	var next string
 	var err error
@@ -67,17 +67,17 @@ func processStep(currentStepKey string, w http.ResponseWriter, steps map[string]
 	switch (stepMap["type"]).(string) {
 	case "http":
 		client := http.Client{}
-		stepOutputs[currentStepKey], next, err = httpOperation.Run(ctx, &client, stepMap, input, stepOutputs)
+		stepOutputs[currentStepKey], next, err = httpOperation.Run(ctx, &client, stepMap, stepOutputs)
 		if err != nil {
 			return err, "error"
 		}
 	case "array":
-		stepOutputs[currentStepKey], next, err = arrayOperation.Run(ctx, stepMap, input, stepOutputs)
+		stepOutputs[currentStepKey], next, err = arrayOperation.Run(ctx, stepMap, stepOutputs)
 		if err != nil {
 			return err, "error"
 		}
 	case "object":
-		stepOutputs[currentStepKey], next, err = objectOperation.Run(ctx, stepMap, input, stepOutputs)
+		stepOutputs[currentStepKey], next, err = objectOperation.Run(ctx, stepMap, stepOutputs)
 		if err != nil {
 			return err, "error"
 		}
@@ -144,7 +144,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	stepInput = input
 	for {
 		var next string
-		stepOutputs[currentStepKey], next = processStep(currentStepKey, w, steps, input, stepOutputs, stepInput)
+		stepOutputs[currentStepKey], next = processStep(currentStepKey, w, steps, stepOutputs, stepInput)
 
 		if next == "" {
 			output = stepOutputs[currentStepKey]

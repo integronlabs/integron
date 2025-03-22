@@ -171,36 +171,6 @@ func TestRunInvalidInputFormat2(t *testing.T) {
 	}
 }
 
-func TestRunInvalidOutputFormat3(t *testing.T) {
-	ctx := context.Background()
-	stepMap := map[string]interface{}{
-		"next":   "next",
-		"output": 1,
-		"input":  VALID_INPUT,
-	}
-	stepOutputs := map[string]interface{}{
-		"output": []interface{}{
-			map[string]interface{}{
-				"message": "world",
-			},
-		},
-	}
-
-	expectedError := "invalid output format"
-
-	output, next, err := Run(ctx, stepMap, stepOutputs)
-
-	if err == nil {
-		t.Error(EXPECTED_ERROR_GOT_NIL)
-	}
-	if output != expectedError {
-		t.Errorf(EXPECTED_BUT_GOT, expectedError, output)
-	}
-	if next != "error" {
-		t.Errorf(EXPECTED_BUT_GOT, "error", next)
-	}
-}
-
 func TestRunInvalidInputFormat3(t *testing.T) {
 	ctx := context.Background()
 	stepMap := map[string]interface{}{

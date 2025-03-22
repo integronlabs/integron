@@ -2,6 +2,7 @@ package object
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/integronlabs/integron/helpers"
 	"github.com/sirupsen/logrus"
@@ -10,8 +11,16 @@ import (
 func Run(ctx context.Context, stepMap map[string]interface{}, stepOutputs map[string]interface{}) (interface{}, string, error) {
 	// get values
 
-	next := stepMap["next"].(string)
-	output := stepMap["output"].(map[string]interface{})
+	next, ok := stepMap["next"].(string)
+	if !ok {
+		err := fmt.Errorf("invalid next format")
+		return err.Error(), "error", err
+	}
+	output, ok := stepMap["output"].(map[string]interface{})
+	if !ok {
+		err := fmt.Errorf("invalid output format")
+		return err.Error(), "error", err
+	}
 
 	logrus.Infof("output: %v", output)
 	logrus.Infof("next: %v", next)
@@ -20,7 +29,7 @@ func Run(ctx context.Context, stepMap map[string]interface{}, stepOutputs map[st
 
 	if err != nil {
 		logrus.Errorf("could not transform body: %v", err)
-		return body, next, err
+		return err.Error(), "error", err
 	}
 
 	return body, next, nil

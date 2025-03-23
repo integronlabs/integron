@@ -11,10 +11,8 @@ const EXPECTED_BUT_GOT = "Expected %v, got %v"
 const VALID_INPUT = "$.output"
 
 var validOutputMap = map[string]interface{}{
-	"output": interface{}{
-		map[string]interface{}{
-			"message": "world",
-		},
+	"output": map[string]interface{}{
+		"message": "world",
 	},
 }
 
@@ -26,10 +24,8 @@ func TestRun(t *testing.T) {
 	}
 	stepOutputs := validOutputMap
 
-	expectedOutput := interface{}{
-		map[string]interface{}{
-			"message": "world",
-		},
+	expectedOutput := map[string]interface{}{
+		"message": "world",
 	}
 
 	expectedNext := "next"
@@ -39,7 +35,7 @@ func TestRun(t *testing.T) {
 	if err != nil {
 		t.Errorf(EXPECTED_NIL_GOT, err)
 	}
-	if output.([]interface{})[0].(map[string]interface{})["message"] != expectedOutput[0].(map[string]interface{})["message"] {
+	if output.(map[string]interface{})["message"] != expectedOutput["message"] {
 		t.Errorf(EXPECTED_BUT_GOT, expectedOutput, output)
 	}
 	if next != expectedNext {

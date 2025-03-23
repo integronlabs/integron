@@ -195,7 +195,7 @@ func TestHttpRequestScenarios(t *testing.T) {
 		},
 		{
 			name:             "Request Timeout",
-			mockResponse:     &http.Response{},
+			mockResponse:     nil,
 			mockError:        http.ErrHandlerTimeout,
 			method:           "GET",
 			url:              EXAMPLE_URL,
@@ -207,7 +207,7 @@ func TestHttpRequestScenarios(t *testing.T) {
 		},
 		{
 			name:             "Invalid URL",
-			mockResponse:     &http.Response{},
+			mockResponse:     nil,
 			mockError:        nil,
 			method:           "GET",
 			url:              "http://example.com/$.test",
@@ -219,7 +219,7 @@ func TestHttpRequestScenarios(t *testing.T) {
 		},
 		{
 			name:             "Invalid Header",
-			mockResponse:     &http.Response{},
+			mockResponse:     nil,
 			mockError:        nil,
 			method:           "GET",
 			url:              EXAMPLE_URL,
@@ -233,29 +233,42 @@ func TestHttpRequestScenarios(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			mockTransport := &MockRoundTripper{
-				MockResponse: test.mockResponse,
-				MockError:    test.mockError,
-			}
-			mockClient := &http.Client{
-				Transport: mockTransport,
-			}
+			mockClient := createMockClient(test.mockResponse, test.mockError)
 
 			response, err := httpRequest(context.Background(), mockClient, test.method, test.url, test.requestBody, test.headers, test.stepOutputs)
 
-			if test.expectedError && err == nil {
-				t.Error(EXPECTED_ERROR_GOT_NIL)
-			}
-			if !test.expectedError && err != nil {
-				t.Errorf(EXPECTED_NIL_GOT, err)
-			}
-			if test.expectedResponse != nil && response != nil && response.StatusCode != test.expectedResponse.StatusCode {
-				t.Errorf(EXPECTED_BUT_GOT, test.expectedResponse.StatusCode, response.StatusCode)
-			}
-			if test.expectedResponse == nil && response != nil {
-				t.Errorf(EXPECTED_NIL_GOT, response)
-			}
+			assertError(t, test.expectedError, err)
+			assertResponse(t, test.expectedResponse, response)
 		})
+	}
+}
+
+func createMockClient(mockResponse *http.Response, mockError error) *http.Client {
+	return &http.Client{
+		Transport: &MockRoundTripper{
+			MockResponse: mockResponse,
+			MockError:    mockError,
+		},
+	}
+}
+
+func assertError(t *testing.T, expectedError bool, err error) {
+	if expectedError && err == nil {
+		t.Error(EXPECTED_ERROR_GOT_NIL)
+	}
+	if !expectedError && err != nil {
+		t.Errorf(EXPECTED_NIL_GOT, err)
+	}
+}
+
+func assertResponse(t *testing.T, expectedResponse, actualResponse *http.Response) {
+	if expectedResponse != nil && actualResponse != nil {
+		if expectedResponse.StatusCode != actualResponse.StatusCode {
+			t.Errorf(EXPECTED_BUT_GOT, expectedResponse.StatusCode, actualResponse.StatusCode)
+		}
+	}
+	if expectedResponse == nil && actualResponse != nil {
+		t.Errorf(EXPECTED_NIL_GOT, actualResponse)
 	}
 }
 

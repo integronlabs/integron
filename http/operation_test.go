@@ -12,6 +12,7 @@ const EXPECTED_NIL_GOT = "Expected nil, got %v"
 const EXPECTED_ERROR_GOT_NIL = "Expected error, got nil"
 const EXPECTED_BUT_GOT = "Expected %v, got %v"
 const VALID_OUTPUT = "$.output.message"
+const EXAMPLE_URL = "http://example.com"
 
 var validOutputMap = map[string]interface{}{
 	"output": map[string]interface{}{
@@ -21,7 +22,7 @@ var validOutputMap = map[string]interface{}{
 
 var validStepMap = map[string]interface{}{
 	"method": "GET",
-	"url":    "http://example.com",
+	"url":    EXAMPLE_URL,
 	"body":   map[string]interface{}{},
 	"headers": map[string]interface{}{
 		"Content-Type": "application/json",
@@ -181,7 +182,7 @@ func TestHttpRequestScenarios(t *testing.T) {
 			},
 			mockError:        nil,
 			method:           "GET",
-			url:              "http://example.com",
+			url:              EXAMPLE_URL,
 			requestBody:      "",
 			headers:          map[string]interface{}{"Content-Type": "application/json"},
 			stepOutputs:      map[string]interface{}{},
@@ -193,7 +194,7 @@ func TestHttpRequestScenarios(t *testing.T) {
 			mockResponse:     &http.Response{},
 			mockError:        http.ErrHandlerTimeout,
 			method:           "GET",
-			url:              "http://example.com",
+			url:              EXAMPLE_URL,
 			requestBody:      "",
 			headers:          map[string]interface{}{"Content-Type": "application/json"},
 			stepOutputs:      map[string]interface{}{},
@@ -217,7 +218,7 @@ func TestHttpRequestScenarios(t *testing.T) {
 			mockResponse:     &http.Response{},
 			mockError:        nil,
 			method:           "GET",
-			url:              "http://example.com",
+			url:              EXAMPLE_URL,
 			requestBody:      "",
 			headers:          map[string]interface{}{"Content-Type": "$.test"},
 			stepOutputs:      map[string]interface{}{},
@@ -265,7 +266,7 @@ func TestHttpRequestInvalidHeader(t *testing.T) {
 		Transport: mockTransport,
 	}
 	method := "GET"
-	url := "http://example.com"
+	url := EXAMPLE_URL
 	requestBodyString := ""
 	headers := map[string]interface{}{
 		"Content-Type": "$.test",
@@ -390,7 +391,7 @@ func TestRunInvalidRequestBody(t *testing.T) {
 	}
 	stepMap := map[string]interface{}{
 		"method": "POST",
-		"url":    "http://example.com",
+		"url":    EXAMPLE_URL,
 		"body": map[string]interface{}{
 			"message": "$.body.message",
 		},

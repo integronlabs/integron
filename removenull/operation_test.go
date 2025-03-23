@@ -11,7 +11,7 @@ const EXPECTED_BUT_GOT = "Expected %v, got %v"
 const VALID_INPUT = "$.output"
 
 var validOutputMap = map[string]interface{}{
-	"output": []interface{}{
+	"output": interface{}{
 		map[string]interface{}{
 			"message": "world",
 		},
@@ -26,7 +26,7 @@ func TestRun(t *testing.T) {
 	}
 	stepOutputs := validOutputMap
 
-	expectedOutput := []interface{}{
+	expectedOutput := interface{}{
 		map[string]interface{}{
 			"message": "world",
 		},

@@ -13,6 +13,7 @@ const EXPECTED_ERROR_GOT_NIL = "Expected error, got nil"
 const EXPECTED_BUT_GOT = "Expected %v, got %v"
 const VALID_OUTPUT = "$.output.message"
 const EXAMPLE_URL = "http://example.com"
+const MESSAGE_JSON_PATH = "$.body.message"
 
 var validOutputMap = map[string]interface{}{
 	"output": map[string]interface{}{
@@ -20,17 +21,19 @@ var validOutputMap = map[string]interface{}{
 	},
 }
 
+var headersMap = map[string]interface{}{
+	"Content-Type": "application/json",
+}
+
 var validStepMap = map[string]interface{}{
-	"method": "GET",
-	"url":    EXAMPLE_URL,
-	"body":   map[string]interface{}{},
-	"headers": map[string]interface{}{
-		"Content-Type": "application/json",
-	},
+	"method":  "GET",
+	"url":     EXAMPLE_URL,
+	"body":    map[string]interface{}{},
+	"headers": headersMap,
 	"responses": map[string]interface{}{
 		"200": map[string]interface{}{
 			"output": map[string]interface{}{
-				"message": "$.body.message",
+				"message": MESSAGE_JSON_PATH,
 			},
 			"next": "next",
 		},
@@ -184,7 +187,7 @@ func TestHttpRequestScenarios(t *testing.T) {
 			method:           "GET",
 			url:              EXAMPLE_URL,
 			requestBody:      "",
-			headers:          map[string]interface{}{"Content-Type": "application/json"},
+			headers:          headersMap,
 			stepOutputs:      map[string]interface{}{},
 			expectedError:    false,
 			expectedResponse: &http.Response{StatusCode: http.StatusOK},
@@ -196,7 +199,7 @@ func TestHttpRequestScenarios(t *testing.T) {
 			method:           "GET",
 			url:              EXAMPLE_URL,
 			requestBody:      "",
-			headers:          map[string]interface{}{"Content-Type": "application/json"},
+			headers:          headersMap,
 			stepOutputs:      map[string]interface{}{},
 			expectedError:    true,
 			expectedResponse: nil,
@@ -208,7 +211,7 @@ func TestHttpRequestScenarios(t *testing.T) {
 			method:           "GET",
 			url:              "http://example.com/$.test",
 			requestBody:      "",
-			headers:          map[string]interface{}{"Content-Type": "application/json"},
+			headers:          headersMap,
 			stepOutputs:      map[string]interface{}{},
 			expectedError:    true,
 			expectedResponse: nil,
@@ -393,7 +396,7 @@ func TestRunInvalidRequestBody(t *testing.T) {
 		"method": "POST",
 		"url":    EXAMPLE_URL,
 		"body": map[string]interface{}{
-			"message": "$.body.message",
+			"message": MESSAGE_JSON_PATH,
 		},
 		"headers": map[string]interface{}{
 			"Content-Type": "application/json",
@@ -401,7 +404,7 @@ func TestRunInvalidRequestBody(t *testing.T) {
 		"responses": map[string]interface{}{
 			"200": map[string]interface{}{
 				"output": map[string]interface{}{
-					"message": "$.body.message",
+					"message": MESSAGE_JSON_PATH,
 				},
 				"next": "next",
 			},

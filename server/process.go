@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -10,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (s *Server) ProcessStep(currentStepKey string, w http.ResponseWriter, steps map[string]interface{}, stepOutputs map[string]interface{}, stepInput interface{}) (interface{}, string) {
+func (s *Server) ProcessStep(ctx context.Context, currentStepKey string, w http.ResponseWriter, steps map[string]interface{}, stepOutputs map[string]interface{}, stepInput interface{}) (interface{}, string) {
 	logrus.Debugf("Processing step: %s", currentStepKey)
 	var next string
 	var err error
@@ -33,7 +34,7 @@ func (s *Server) ProcessStep(currentStepKey string, w http.ResponseWriter, steps
 		return fmt.Errorf("unknown step type: %s", stepType), "error"
 	}
 
-	stepOutput, next, err := handler(s.Ctx, stepMap, stepOutputs)
+	stepOutput, next, err := handler(ctx, stepMap, stepOutputs)
 	if err != nil {
 		if stepType == "error" {
 			message, _ := json.Marshal(map[string]interface{}{"message": stepInput})

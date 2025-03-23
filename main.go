@@ -49,12 +49,11 @@ func main() {
 
 	s := server.Server{
 		Router: r,
-		Ctx:    ctx,
-		Client: http.Client{},
 	}
 
 	server.RegisterStep("http", func(ctx context.Context, stepMap map[string]interface{}, stepOutputs map[string]interface{}) (interface{}, string, error) {
-		return httpOperation.Run(ctx, &s.Client, stepMap, stepOutputs)
+		client := http.Client{}
+		return httpOperation.Run(ctx, &client, stepMap, stepOutputs)
 	})
 	server.RegisterStep("array", array.Run)
 	server.RegisterStep("object", object.Run)

@@ -23,7 +23,9 @@ func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
 		Route:      route,
 	}
 
-	err = openapi3filter.ValidateRequest(s.Ctx, requestValidationInput)
+	ctx := r.Context()
+
+	err = openapi3filter.ValidateRequest(ctx, requestValidationInput)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -56,7 +58,7 @@ func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
 	stepInput = input
 	for {
 		var next string
-		stepOutputs[currentStepKey], next = s.ProcessStep(currentStepKey, w, steps, stepOutputs, stepInput)
+		stepOutputs[currentStepKey], next = s.ProcessStep(ctx, currentStepKey, w, steps, stepOutputs, stepInput)
 
 		if next == "" {
 			output = stepOutputs[currentStepKey]
@@ -100,7 +102,7 @@ func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
 		// Body:                   io.NopCloser(strings.NewReader(string(responseBody))),
 	}
 	responseValidationInput.SetBodyBytes(responseBody)
-	err = openapi3filter.ValidateResponse(s.Ctx, responseValidationInput)
+	err = openapi3filter.ValidateResponse(ctx, responseValidationInput)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

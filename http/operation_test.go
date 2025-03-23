@@ -14,6 +14,7 @@ const EXPECTED_BUT_GOT = "Expected %v, got %v"
 const VALID_OUTPUT = "$.output.message"
 const EXAMPLE_URL = "http://example.com"
 const MESSAGE_JSON_PATH = "$.body.message"
+const HEADER_CONTENT_TYPE = "Content-Type"
 
 var validOutputMap = map[string]interface{}{
 	"output": map[string]interface{}{
@@ -22,7 +23,7 @@ var validOutputMap = map[string]interface{}{
 }
 
 var headersMap = map[string]interface{}{
-	"Content-Type": "application/json",
+	HEADER_CONTENT_TYPE: "application/json",
 }
 
 var validStepMap = map[string]interface{}{
@@ -223,7 +224,7 @@ func TestHttpRequestScenarios(t *testing.T) {
 			method:           "GET",
 			url:              EXAMPLE_URL,
 			requestBody:      "",
-			headers:          map[string]interface{}{"Content-Type": "$.test"},
+			headers:          map[string]interface{}{HEADER_CONTENT_TYPE: "$.test"},
 			stepOutputs:      map[string]interface{}{},
 			expectedError:    true,
 			expectedResponse: nil,
@@ -272,7 +273,7 @@ func TestHttpRequestInvalidHeader(t *testing.T) {
 	url := EXAMPLE_URL
 	requestBodyString := ""
 	headers := map[string]interface{}{
-		"Content-Type": "$.test",
+		HEADER_CONTENT_TYPE: "$.test",
 	}
 	stepOutputs := map[string]interface{}{}
 
@@ -399,7 +400,7 @@ func TestRunInvalidRequestBody(t *testing.T) {
 			"message": MESSAGE_JSON_PATH,
 		},
 		"headers": map[string]interface{}{
-			"Content-Type": "application/json",
+			HEADER_CONTENT_TYPE: "application/json",
 		},
 		"responses": map[string]interface{}{
 			"200": map[string]interface{}{

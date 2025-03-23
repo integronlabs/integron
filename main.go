@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"net/http"
 
@@ -23,7 +22,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/sirupsen/logrus"
+
+	_ "embed"
 )
+
+//go:embed docs/openapi.yaml
+var openapiSpec []byte
 
 var router routers.Router
 var ctx context.Context
@@ -182,13 +186,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	helpers.SetupLogging()
 
-	openapiSpec := flag.String("spec", "docs/openapi.yaml", "path to the openapi spec")
-
-	flag.Parse()
-
 	ctx = context.Background()
 	loader := &openapi3.Loader{Context: ctx, IsExternalRefsAllowed: true}
-	doc, err := loader.LoadFromFile(*openapiSpec)
+	doc, err := loader.LoadFromData(openapiSpec)
 	if err != nil {
 		panic(err)
 	}
@@ -212,7 +212,7 @@ func main() {
 
 	http.Handle("/ui/", v5emb.New(
 		"Integron Sunrise",
-		"/"+*openapiSpec,
+		"/docs/openapi.yaml",
 		"/ui/",
 	))
 

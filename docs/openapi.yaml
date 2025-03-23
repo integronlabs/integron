@@ -73,6 +73,11 @@ paths:
             output:
               fact: $.attributes.body
               id: $.id
+              moha: null
+            next: "removeNull"
+          - name: removeNull
+            type: removenull
+            input: $.arrayTransform
             next: "responseMarshal"
           - name: responseMarshal
             type: object

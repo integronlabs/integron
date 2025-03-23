@@ -19,6 +19,23 @@ var validOutputMap = map[string]interface{}{
 	},
 }
 
+var validStepMap = map[string]interface{}{
+	"method": "GET",
+	"url":    "http://example.com",
+	"body":   map[string]interface{}{},
+	"headers": map[string]interface{}{
+		"Content-Type": "application/json",
+	},
+	"responses": map[string]interface{}{
+		"200": map[string]interface{}{
+			"output": map[string]interface{}{
+				"message": "$.body.message",
+			},
+			"next": "next",
+		},
+	},
+}
+
 type MockRoundTripper struct {
 	MockResponse *http.Response
 	MockError    error
@@ -141,93 +158,99 @@ func TestGetActionInvalidNextFormat(t *testing.T) {
 		t.Errorf(EXPECTED_BUT_GOT, "error", next)
 	}
 }
-func TestHttpRequest(t *testing.T) {
-	ctx := context.Background()
-	mockResponse := &http.Response{
-		StatusCode: http.StatusOK,
-		Body:       io.NopCloser(bytes.NewBufferString(`{"message": "success"}`)),
-		Header:     make(http.Header),
+
+func TestHttpRequestScenarios(t *testing.T) {
+	tests := []struct {
+		name             string
+		mockResponse     *http.Response
+		mockError        error
+		method           string
+		url              string
+		requestBody      string
+		headers          map[string]interface{}
+		stepOutputs      map[string]interface{}
+		expectedError    bool
+		expectedResponse *http.Response
+	}{
+		{
+			name: "Valid Request",
+			mockResponse: &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(bytes.NewBufferString(`{"message": "success"}`)),
+				Header:     make(http.Header),
+			},
+			mockError:        nil,
+			method:           "GET",
+			url:              "http://example.com",
+			requestBody:      "",
+			headers:          map[string]interface{}{"Content-Type": "application/json"},
+			stepOutputs:      map[string]interface{}{},
+			expectedError:    false,
+			expectedResponse: &http.Response{StatusCode: http.StatusOK},
+		},
+		{
+			name:             "Request Timeout",
+			mockResponse:     &http.Response{},
+			mockError:        http.ErrHandlerTimeout,
+			method:           "GET",
+			url:              "http://example.com",
+			requestBody:      "",
+			headers:          map[string]interface{}{"Content-Type": "application/json"},
+			stepOutputs:      map[string]interface{}{},
+			expectedError:    true,
+			expectedResponse: nil,
+		},
+		{
+			name:             "Invalid URL",
+			mockResponse:     &http.Response{},
+			mockError:        nil,
+			method:           "GET",
+			url:              "http://example.com/$.test",
+			requestBody:      "",
+			headers:          map[string]interface{}{"Content-Type": "application/json"},
+			stepOutputs:      map[string]interface{}{},
+			expectedError:    true,
+			expectedResponse: nil,
+		},
+		{
+			name:             "Invalid Header",
+			mockResponse:     &http.Response{},
+			mockError:        nil,
+			method:           "GET",
+			url:              "http://example.com",
+			requestBody:      "",
+			headers:          map[string]interface{}{"Content-Type": "$.test"},
+			stepOutputs:      map[string]interface{}{},
+			expectedError:    true,
+			expectedResponse: nil,
+		},
 	}
 
-	// Create a mock HTTP client
-	mockTransport := &MockRoundTripper{
-		MockResponse: mockResponse,
-		MockError:    nil,
-	}
-	mockClient := &http.Client{
-		Transport: mockTransport,
-	}
-	method := "GET"
-	url := "http://example.com"
-	requestBodyString := ""
-	headers := map[string]interface{}{
-		"Content-Type": "application/json",
-	}
-	stepOutputs := map[string]interface{}{}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			mockTransport := &MockRoundTripper{
+				MockResponse: test.mockResponse,
+				MockError:    test.mockError,
+			}
+			mockClient := &http.Client{
+				Transport: mockTransport,
+			}
 
-	response, err := httpRequest(ctx, mockClient, method, url, requestBodyString, headers, stepOutputs)
+			response, err := httpRequest(context.Background(), mockClient, test.method, test.url, test.requestBody, test.headers, test.stepOutputs)
 
-	if err != nil {
-		t.Errorf(EXPECTED_NIL_GOT, err)
-	}
-	if response.StatusCode != http.StatusOK {
-		t.Errorf(EXPECTED_BUT_GOT, response.StatusCode, http.StatusOK)
-	}
-}
-
-func TestHttpRequestError(t *testing.T) {
-	ctx := context.Background()
-	mockResponse := &http.Response{}
-	mockTransport := &MockRoundTripper{
-		MockResponse: mockResponse,
-		MockError:    http.ErrHandlerTimeout,
-	}
-	mockClient := &http.Client{
-		Transport: mockTransport,
-	}
-	method := "GET"
-	url := "http://example.com"
-	requestBodyString := ""
-	headers := map[string]interface{}{
-		"Content-Type": "application/json",
-	}
-	stepOutputs := map[string]interface{}{}
-
-	response, err := httpRequest(ctx, mockClient, method, url, requestBodyString, headers, stepOutputs)
-
-	if err == nil {
-		t.Error(EXPECTED_ERROR_GOT_NIL)
-	}
-	if response != nil {
-		t.Errorf(EXPECTED_NIL_GOT, response)
-	}
-}
-
-func TestHttpRequestInvalidUrl(t *testing.T) {
-	ctx := context.Background()
-	mockResponse := &http.Response{}
-	mockTransport := &MockRoundTripper{
-		MockResponse: mockResponse,
-		MockError:    nil,
-	}
-	mockClient := &http.Client{
-		Transport: mockTransport,
-	}
-	method := "GET"
-	url := "http://example.com/$.test"
-	requestBodyString := ""
-	headers := map[string]interface{}{
-		"Content-Type": "application/json",
-	}
-	stepOutputs := map[string]interface{}{}
-
-	response, err := httpRequest(ctx, mockClient, method, url, requestBodyString, headers, stepOutputs)
-
-	if err == nil {
-		t.Error(EXPECTED_ERROR_GOT_NIL)
-	}
-	if response != nil {
-		t.Errorf(EXPECTED_NIL_GOT, response)
+			if test.expectedError && err == nil {
+				t.Error(EXPECTED_ERROR_GOT_NIL)
+			}
+			if !test.expectedError && err != nil {
+				t.Errorf(EXPECTED_NIL_GOT, err)
+			}
+			if test.expectedResponse != nil && response != nil && response.StatusCode != test.expectedResponse.StatusCode {
+				t.Errorf(EXPECTED_BUT_GOT, test.expectedResponse.StatusCode, response.StatusCode)
+			}
+			if test.expectedResponse == nil && response != nil {
+				t.Errorf(EXPECTED_NIL_GOT, response)
+			}
+		})
 	}
 }
 
@@ -275,22 +298,7 @@ func TestRun(t *testing.T) {
 	mockClient := &http.Client{
 		Transport: mockTransport,
 	}
-	stepMap := map[string]interface{}{
-		"method": "GET",
-		"url":    "http://example.com",
-		"body":   map[string]interface{}{},
-		"headers": map[string]interface{}{
-			"Content-Type": "application/json",
-		},
-		"responses": map[string]interface{}{
-			"200": map[string]interface{}{
-				"output": map[string]interface{}{
-					"message": "$.body.message",
-				},
-				"next": "next",
-			},
-		},
-	}
+	stepMap := validStepMap
 	stepOutputs := validOutputMap
 
 	output, next, err := Run(ctx, mockClient, stepMap, stepOutputs)
@@ -316,22 +324,7 @@ func TestRunError(t *testing.T) {
 	mockClient := &http.Client{
 		Transport: mockTransport,
 	}
-	stepMap := map[string]interface{}{
-		"method": "GET",
-		"url":    "http://example.com",
-		"body":   map[string]interface{}{},
-		"headers": map[string]interface{}{
-			"Content-Type": "application/json",
-		},
-		"responses": map[string]interface{}{
-			"200": map[string]interface{}{
-				"output": map[string]interface{}{
-					"message": "$.body.message",
-				},
-				"next": "next",
-			},
-		},
-	}
+	stepMap := validStepMap
 	stepOutputs := validOutputMap
 	expectedOutput := "Get \"http://example.com\": http: Handler timeout"
 
@@ -362,20 +355,9 @@ func TestRunInvalidOutputFormat(t *testing.T) {
 	mockClient := &http.Client{
 		Transport: mockTransport,
 	}
-	stepMap := map[string]interface{}{
-		"method": "GET",
-		"url":    "http://example.com",
-		"body":   map[string]interface{}{},
-		"headers": map[string]interface{}{
-			"Content-Type": "application/json",
-		},
-		"responses": map[string]interface{}{
-			"200": map[string]interface{}{
-				"output": 1,
-				"next":   "next",
-			},
-		},
-	}
+	stepMap := validStepMap
+	stepMap["responses"].(map[string]interface{})["200"].(map[string]interface{})["output"] = 1
+
 	stepOutputs := validOutputMap
 	expectedOutput := "invalid output format"
 
@@ -456,22 +438,7 @@ func TestRunInvalidJsonResponse(t *testing.T) {
 	mockClient := &http.Client{
 		Transport: mockTransport,
 	}
-	stepMap := map[string]interface{}{
-		"method": "GET",
-		"url":    "http://example.com",
-		"body":   map[string]interface{}{},
-		"headers": map[string]interface{}{
-			"Content-Type": "application/json",
-		},
-		"responses": map[string]interface{}{
-			"200": map[string]interface{}{
-				"output": map[string]interface{}{
-					"message": "$.body.message",
-				},
-				"next": "next",
-			},
-		},
-	}
+	stepMap := validStepMap
 	stepOutputs := validOutputMap
 	expectedOutput := "unexpected EOF"
 
@@ -502,21 +469,9 @@ func TestRunInvalidOutputMap(t *testing.T) {
 	mockClient := &http.Client{
 		Transport: mockTransport,
 	}
-	stepMap := map[string]interface{}{
-		"method": "GET",
-		"url":    "http://example.com",
-		"body":   map[string]interface{}{},
-		"headers": map[string]interface{}{
-			"Content-Type": "application/json",
-		},
-		"responses": map[string]interface{}{
-			"200": map[string]interface{}{
-				"output": map[string]interface{}{
-					"message": "$.body.test",
-				},
-				"next": "next",
-			},
-		},
+	stepMap := validStepMap
+	stepMap["responses"].(map[string]interface{})["200"].(map[string]interface{})["output"] = map[string]interface{}{
+		"message": "$.body.test",
 	}
 	stepOutputs := map[string]interface{}{
 		"output": 1,

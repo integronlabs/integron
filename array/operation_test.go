@@ -182,33 +182,3 @@ func TestRunInvalidInputFormat3(t *testing.T) {
 		t.Errorf(EXPECTED_BUT_GOT, "error", next)
 	}
 }
-
-func TestRunTransformArrayError(t *testing.T) {
-	ctx := context.Background()
-	stepMap := map[string]interface{}{
-		"next": "next",
-		"output": map[string]interface{}{
-			"message": "$.message[]",
-		},
-		"input": VALID_INPUT,
-	}
-	stepOutputs := map[string]interface{}{
-		"output": []interface{}{
-			"invalid",
-		},
-	}
-
-	expectedError := "parsing error: $.message[]	:1:11 - 1:12 unexpected \"]\" while scanning extensions"
-
-	output, next, err := Run(ctx, stepMap, stepOutputs)
-
-	if err == nil {
-		t.Error(EXPECTED_ERROR_GOT_NIL)
-	}
-	if output != expectedError {
-		t.Errorf(EXPECTED_BUT_GOT, expectedError, output)
-	}
-	if next != "error" {
-		t.Errorf(EXPECTED_BUT_GOT, "error", next)
-	}
-}

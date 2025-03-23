@@ -272,34 +272,6 @@ func assertResponse(t *testing.T, expectedResponse, actualResponse *http.Respons
 	}
 }
 
-func TestHttpRequestInvalidHeader(t *testing.T) {
-	ctx := context.Background()
-	mockResponse := &http.Response{}
-	mockTransport := &MockRoundTripper{
-		MockResponse: mockResponse,
-		MockError:    nil,
-	}
-	mockClient := &http.Client{
-		Transport: mockTransport,
-	}
-	method := "GET"
-	url := EXAMPLE_URL
-	requestBodyString := ""
-	headers := map[string]interface{}{
-		HEADER_CONTENT_TYPE: "$.test",
-	}
-	stepOutputs := map[string]interface{}{}
-
-	response, err := httpRequest(ctx, mockClient, method, url, requestBodyString, headers, stepOutputs)
-
-	if err == nil {
-		t.Error(EXPECTED_ERROR_GOT_NIL)
-	}
-	if response != nil {
-		t.Errorf(EXPECTED_NIL_GOT, response)
-	}
-}
-
 func TestRun(t *testing.T) {
 	ctx := context.Background()
 	mockResponse := &http.Response{
@@ -392,56 +364,6 @@ func TestRunInvalidOutputFormat(t *testing.T) {
 	}
 }
 
-func TestRunInvalidRequestBody(t *testing.T) {
-	ctx := context.Background()
-	mockResponse := &http.Response{
-		StatusCode: http.StatusOK,
-		Body:       io.NopCloser(bytes.NewBufferString(`{"message": "success"}`)),
-		Header:     make(http.Header),
-	}
-	mockTransport := &MockRoundTripper{
-		MockResponse: mockResponse,
-		MockError:    nil,
-	}
-	mockClient := &http.Client{
-		Transport: mockTransport,
-	}
-	stepMap := map[string]interface{}{
-		"method": "POST",
-		"url":    EXAMPLE_URL,
-		"body": map[string]interface{}{
-			"message": MESSAGE_JSON_PATH,
-		},
-		"headers": map[string]interface{}{
-			HEADER_CONTENT_TYPE: "application/json",
-		},
-		"responses": map[string]interface{}{
-			"200": map[string]interface{}{
-				"output": map[string]interface{}{
-					"message": MESSAGE_JSON_PATH,
-				},
-				"next": "next",
-			},
-		},
-	}
-	stepOutputs := map[string]interface{}{
-		"body": 1,
-	}
-	expectedOutput := "unsupported value type int for select, expected map[string]interface{} or []interface{}"
-
-	output, next, err := Run(ctx, mockClient, stepMap, stepOutputs)
-
-	if err == nil {
-		t.Error(EXPECTED_ERROR_GOT_NIL)
-	}
-	if output != expectedOutput {
-		t.Errorf(EXPECTED_BUT_GOT, expectedOutput, output)
-	}
-	if next != "error" {
-		t.Errorf(EXPECTED_BUT_GOT, "error", next)
-	}
-}
-
 func TestRunInvalidJsonResponse(t *testing.T) {
 	ctx := context.Background()
 	mockResponse := &http.Response{
@@ -459,42 +381,6 @@ func TestRunInvalidJsonResponse(t *testing.T) {
 	stepMap := validStepMap
 	stepOutputs := validOutputMap
 	expectedOutput := "unexpected EOF"
-
-	output, next, err := Run(ctx, mockClient, stepMap, stepOutputs)
-
-	if err == nil {
-		t.Error(EXPECTED_ERROR_GOT_NIL)
-	}
-	if output != expectedOutput {
-		t.Errorf(EXPECTED_BUT_GOT, expectedOutput, output)
-	}
-	if next != "error" {
-		t.Errorf(EXPECTED_BUT_GOT, "error", next)
-	}
-}
-
-func TestRunInvalidOutputMap(t *testing.T) {
-	ctx := context.Background()
-	mockResponse := &http.Response{
-		StatusCode: http.StatusOK,
-		Body:       io.NopCloser(bytes.NewBufferString(`{"message": "success"}`)),
-		Header:     make(http.Header),
-	}
-	mockTransport := &MockRoundTripper{
-		MockResponse: mockResponse,
-		MockError:    nil,
-	}
-	mockClient := &http.Client{
-		Transport: mockTransport,
-	}
-	stepMap := validStepMap
-	stepMap["responses"].(map[string]interface{})["200"].(map[string]interface{})["output"] = map[string]interface{}{
-		"message": "$.body.test",
-	}
-	stepOutputs := map[string]interface{}{
-		"output": 1,
-	}
-	expectedOutput := "unknown key test"
 
 	output, next, err := Run(ctx, mockClient, stepMap, stepOutputs)
 

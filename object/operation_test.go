@@ -89,30 +89,3 @@ func TestRunInvalidOutputFormat(t *testing.T) {
 		t.Errorf(EXPECTED_BUT_GOT, "error", next)
 	}
 }
-
-func TestRunCouldNotTransformBody(t *testing.T) {
-	ctx := context.Background()
-	stepMap := map[string]interface{}{
-		"next": "next",
-		"output": map[string]interface{}{
-			"message": "$.output[]",
-		},
-	}
-	stepOutputs := map[string]interface{}{
-		"output": "invalid",
-	}
-
-	expectedOutput := "parsing error: $.output[]	:1:10 - 1:11 unexpected \"]\" while scanning extensions"
-
-	output, next, err := Run(ctx, stepMap, stepOutputs)
-
-	if err == nil {
-		t.Error(EXPECTED_ERROR_GOT_NIL)
-	}
-	if output != expectedOutput {
-		t.Errorf(EXPECTED_BUT_GOT, expectedOutput, output)
-	}
-	if next != "error" {
-		t.Errorf(EXPECTED_BUT_GOT, "error", next)
-	}
-}

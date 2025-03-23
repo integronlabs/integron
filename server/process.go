@@ -11,7 +11,7 @@ import (
 )
 
 func (s *Server) ProcessStep(currentStepKey string, w http.ResponseWriter, steps map[string]interface{}, stepOutputs map[string]interface{}, stepInput interface{}) (interface{}, string) {
-	logrus.Infof("Processing step: %s", currentStepKey)
+	logrus.Debugf("Processing step: %s", currentStepKey)
 	var next string
 	var err error
 	step, ok := steps[currentStepKey]
@@ -42,7 +42,7 @@ func (s *Server) ProcessStep(currentStepKey string, w http.ResponseWriter, steps
 		}
 		return err.Error(), "error"
 	}
-	logrus.Infof("Step %s completed", currentStepKey)
-	logrus.Infof("Step outputs: %v", stepOutputs[currentStepKey])
+	logrus.Debugf("Step %s completed", currentStepKey)
+	logrus.Debugf("Step outputs: %v", stepOutput)
 	return stepOutput, next
 }

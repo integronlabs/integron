@@ -8,57 +8,48 @@ import (
 	"github.com/PaesslerAG/jsonpath"
 )
 
-func Replace(input string, stepOutputs interface{}) (string, error) {
+func Replace(input string, stepOutputs interface{}) string {
 	re := regexp.MustCompile(`\$\.[a-zA-Z0-9_\[\]\.]+`)
 	matches := re.FindAllString(input, -1)
 
 	for _, match := range matches {
-		value, err := jsonpath.Get(match, stepOutputs)
-		if err != nil {
-			return err.Error(), err
-		}
+		value, _ := jsonpath.Get(match, stepOutputs)
 		input = strings.ReplaceAll(input, match, fmt.Sprintf("%v", value))
 	}
 
-	return input, nil
+	return input
 }
 
-func transformBodyArray(outputArray []interface{}, body interface{}) ([]interface{}, error) {
+func transformBodyArray(outputArray []interface{}, body interface{}) []interface{} {
 	transformedBody := make([]interface{}, 0)
 	for _, outputMap := range outputArray {
-		transformed, err := TransformBody(body, outputMap)
-		if err != nil {
-			return transformedBody, err
-		}
+		transformed := TransformBody(body, outputMap)
 		transformedBody = append(transformedBody, transformed)
 	}
-	return transformedBody, nil
+	return transformedBody
 }
 
-func transformBodyMap(outputMap map[string]interface{}, body interface{}) (map[string]interface{}, error) {
+func transformBodyMap(outputMap map[string]interface{}, body interface{}) map[string]interface{} {
 	transformedBody := make(map[string]interface{})
 	for key, value := range outputMap {
-		transformed, err := TransformBody(body, value)
-		if err != nil {
-			return transformedBody, err
-		}
+		transformed := TransformBody(body, value)
 		transformedBody[key] = transformed
 	}
-	return transformedBody, nil
+	return transformedBody
 }
 
-func transformBodyString(output string, body interface{}) (interface{}, error) {
+func transformBodyString(output string, body interface{}) interface{} {
 	if strings.HasPrefix(output, "$") {
 		// get value from body
-		value, err := jsonpath.Get(output, body)
-		return value, err
+		value, _ := jsonpath.Get(output, body)
+		return value
 	} else {
-		value, err := Replace(output, body)
-		return value, err
+		value := Replace(output, body)
+		return value
 	}
 }
 
-func TransformBody(body interface{}, output interface{}) (interface{}, error) {
+func TransformBody(body interface{}, output interface{}) interface{} {
 
 	// if output is array, go through each element and transform
 	if outputArray, ok := output.([]interface{}); ok {
@@ -72,17 +63,14 @@ func TransformBody(body interface{}, output interface{}) (interface{}, error) {
 	if valueStr, ok := output.(string); ok {
 		return transformBodyString(valueStr, body)
 	}
-	return output, nil
+	return output
 }
 
-func TransformArray(inputArray []interface{}, output map[string]interface{}) ([]interface{}, error) {
+func TransformArray(inputArray []interface{}, output map[string]interface{}) []interface{} {
 	transformedArray := make([]interface{}, 0)
 	for _, inputMap := range inputArray {
-		transformed, err := TransformBody(inputMap, output)
-		if err != nil {
-			return transformedArray, err
-		}
+		transformed := TransformBody(inputMap, output)
 		transformedArray = append(transformedArray, transformed)
 	}
-	return transformedArray, nil
+	return transformedArray
 }

@@ -35,6 +35,8 @@ func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
 	stepOutputs := make(map[string]interface{})
 	input := helpers.ExtractParams(pathParams, r.URL.Query())
 
+	_ = json.NewDecoder(r.Body).Decode(&input)
+
 	stepOutputs["request"] = input
 
 	stepsArray, ok := route.PathItem.GetOperation(route.Method).Extensions["x-integron-steps"].([]interface{})

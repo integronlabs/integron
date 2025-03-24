@@ -66,6 +66,7 @@ paths:
               '200':
                 output:
                   response: $.body
+                  status: $.status
                 next: "arrayTransform"
           - name: arrayTransform
             type: array

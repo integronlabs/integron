@@ -9,6 +9,26 @@ import (
 	"github.com/integronlabs/integron/helpers"
 )
 
+func getStatusCode(statusCodeInterface interface{}) int {
+	if status, ok := statusCodeInterface.(int); ok {
+		// conver status to int
+		return status
+	}
+	if status, ok := statusCodeInterface.(string); ok {
+		// conver status to int
+		statusCode, err := strconv.Atoi(status)
+		if err != nil {
+			return 200
+		}
+		return statusCode
+	}
+	if status, ok := statusCodeInterface.(float64); ok {
+		// conver status to int
+		return int(status)
+	}
+	return 200
+}
+
 func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
 	// Find route
 	route, pathParams, err := s.Router.FindRoute(r)
@@ -76,15 +96,7 @@ func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid output format", http.StatusInternalServerError)
 		return
 	}
-	responseCode := 200
-	if status, ok := outputMap["status"].(string); ok {
-		// conver status to int
-		responseCode, err = strconv.Atoi(status)
-		if err != nil {
-			http.Error(w, "Invalid status code", http.StatusInternalServerError)
-			return
-		}
-	}
+	responseCode := getStatusCode(outputMap["status"])
 	jsonBody, _ := json.Marshal(outputMap["body"])
 	responseBody := []byte(jsonBody)
 

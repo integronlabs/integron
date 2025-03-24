@@ -24,8 +24,8 @@ func Run(ctx context.Context, stepMap map[string]interface{}, stepOutputs map[st
 		return err.Error(), "error", err
 	}
 
-	logrus.Debugf("inputString: %v", inputString)
-	logrus.Debugf("next: %v", next)
+	logrus.WithContext(ctx).Debugf("inputString: %v", inputString)
+	logrus.WithContext(ctx).Debugf("next: %v", next)
 
 	// replace placeholders in input
 	inputMap, err := jsonpath.Get(inputString, stepOutputs)
@@ -34,7 +34,7 @@ func Run(ctx context.Context, stepMap map[string]interface{}, stepOutputs map[st
 		return err.Error(), "error", err
 	}
 
-	logrus.Debugf("inputMap: %v", inputMap)
+	logrus.WithContext(ctx).Debugf("inputMap: %v", inputMap)
 
 	body := helpers.RemoveNull(inputMap)
 

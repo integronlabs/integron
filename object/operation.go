@@ -22,8 +22,8 @@ func Run(ctx context.Context, stepMap map[string]interface{}, stepOutputs map[st
 		return err.Error(), "error", err
 	}
 
-	logrus.Debugf("output: %v", output)
-	logrus.Debugf("next: %v", next)
+	logrus.WithContext(ctx).Debugf("output: %v", output)
+	logrus.WithContext(ctx).Debugf("next: %v", next)
 
 	body := helpers.TransformBody(stepOutputs, output)
 

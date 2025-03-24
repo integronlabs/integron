@@ -12,7 +12,7 @@ import (
 func (s *Server) ProcessStep(r *http.Request, currentStepKey string, w http.ResponseWriter, steps map[string]interface{}, stepOutputs map[string]interface{}, stepInput interface{}) (interface{}, string) {
 	ctx := r.Context()
 
-	logrus.Debugf("Processing step: %s", currentStepKey)
+	logrus.WithContext(ctx).Debugf("Processing step: %s", currentStepKey)
 
 	var next string
 	var err error
@@ -44,7 +44,7 @@ func (s *Server) ProcessStep(r *http.Request, currentStepKey string, w http.Resp
 		}
 		return err.Error(), "error"
 	}
-	logrus.Debugf("Step %s completed", currentStepKey)
-	logrus.Debugf("Step outputs: %v", stepOutput)
+	logrus.WithContext(ctx).Debugf("Step %s completed", currentStepKey)
+	logrus.WithContext(ctx).Debugf("Step outputs: %v", stepOutput)
 	return stepOutput, next
 }

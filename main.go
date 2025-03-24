@@ -48,7 +48,8 @@ func main() {
 	}
 
 	s := server.Server{
-		Router: r,
+		Router:     r,
+		LogHandler: func(ctx context.Context, r *http.Request) {},
 	}
 
 	server.RegisterStep("http", func(ctx context.Context, stepMap map[string]interface{}, stepOutputs map[string]interface{}) (interface{}, string, error) {

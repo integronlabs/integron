@@ -62,6 +62,10 @@ func Error(w http.ResponseWriter, message string, code int) {
 }
 
 func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	s.LogHandler(ctx, r)
+
 	// Find route
 	route, pathParams, err := s.Router.FindRoute(r)
 	if err != nil {
@@ -75,8 +79,6 @@ func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
 		PathParams: pathParams,
 		Route:      route,
 	}
-
-	ctx := r.Context()
 
 	err = openapi3filter.ValidateRequest(ctx, requestValidationInput)
 

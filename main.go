@@ -16,8 +16,6 @@ import (
 
 	"github.com/swaggest/swgui/v5emb"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
 	"github.com/sirupsen/logrus"
 
 	_ "embed"
@@ -73,8 +71,6 @@ func main() {
 		"/docs/openapi.yaml",
 		"/ui/",
 	))
-
-	http.Handle("/metrics", promhttp.Handler())
 
 	logrus.Fatal(http.ListenAndServe(":8080", nil))
 }

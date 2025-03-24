@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -10,10 +9,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (s *Server) ProcessStep(ctx context.Context, currentStepKey string, w http.ResponseWriter, steps map[string]interface{}, stepOutputs map[string]interface{}, stepInput interface{}) (interface{}, string) {
+func (s *Server) ProcessStep(r *http.Request, currentStepKey string, w http.ResponseWriter, steps map[string]interface{}, stepOutputs map[string]interface{}, stepInput interface{}) (interface{}, string) {
+	ctx := r.Context()
+
 	logrus.Debugf("Processing step: %s", currentStepKey)
+
 	var next string
 	var err error
+
 	step, ok := steps[currentStepKey]
 	if !ok {
 		return fmt.Errorf(helpers.INVALID_STEP_DEFINITION), "error"
@@ -36,7 +39,7 @@ func (s *Server) ProcessStep(ctx context.Context, currentStepKey string, w http.
 	stepOutput, next, err := handler(ctx, stepMap, stepOutputs)
 	if err != nil {
 		if stepType == "error" {
-			Error(w, stepInput.(error).Error(), http.StatusInternalServerError)
+			Error(r, w, stepInput.(error).Error(), http.StatusInternalServerError, "EXCEPTION")
 			return nil, "end"
 		}
 		return err.Error(), "error"

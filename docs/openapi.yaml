@@ -82,7 +82,7 @@ paths:
           - name: removeNull
             type: removenull
             input: $.arrayTransform
-            next: "responseMarshal"
+            next: "blah"
           - name: responseMarshal
             type: object
             output:

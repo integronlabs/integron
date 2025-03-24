@@ -7,6 +7,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/integronlabs/integron/helpers"
+	"github.com/sirupsen/logrus"
 )
 
 func getStatusCode(statusCodeInterface interface{}) int {
@@ -29,11 +30,42 @@ func getStatusCode(statusCodeInterface interface{}) int {
 	return 200
 }
 
+func Error(w http.ResponseWriter, message string, code int) {
+	h := w.Header()
+
+	h.Del("Content-Length")
+
+	h.Set("X-Content-Type-Options", "nosniff")
+
+	responseHeaders := http.Header{
+		"Content-Type":                 []string{"application/json"},
+		"Access-Control-Allow-Origin":  []string{"*"},
+		"Access-Control-Allow-Methods": []string{"GET, POST, PUT, DELETE"},
+		"Access-Control-Allow-Headers": []string{"Content-Type"},
+	}
+
+	helpers.FillResponseHeaders(responseHeaders, w)
+
+	body := map[string]interface{}{
+		"message": message,
+	}
+
+	jsonBody, _ := json.Marshal(body)
+	responseBody := []byte(jsonBody)
+
+	w.WriteHeader(code)
+
+	w.Write(responseBody)
+
+	logrus.Errorf("Error: %s", message)
+	logrus.Errorf("Code: %d", code)
+}
+
 func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
 	// Find route
 	route, pathParams, err := s.Router.FindRoute(r)
 	if err != nil {
-		http.Error(w, "Method not found", http.StatusNotFound)
+		Error(w, "Method not found", http.StatusNotFound)
 		return
 	}
 
@@ -49,7 +81,7 @@ func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
 	err = openapi3filter.ValidateRequest(ctx, requestValidationInput)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -65,14 +97,14 @@ func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
 	stepsArray, ok := route.PathItem.GetOperation(route.Method).Extensions["x-integron-steps"].([]interface{})
 
 	if !ok {
-		http.Error(w, "Invalid x-integron-steps", http.StatusInternalServerError)
+		Error(w, "Invalid x-integron-steps", http.StatusInternalServerError)
 		return
 	}
 
 	currentStepKey := stepsArray[0].(map[string]interface{})["name"].(string)
 	steps, err := helpers.CreateStepsMap(stepsArray)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -93,7 +125,7 @@ func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
 
 	outputMap, ok := output.(map[string]interface{})
 	if !ok {
-		http.Error(w, "Invalid output format", http.StatusInternalServerError)
+		Error(w, "Invalid output format", http.StatusInternalServerError)
 		return
 	}
 	responseCode := getStatusCode(outputMap["status"])
@@ -123,7 +155,7 @@ func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
 	err = openapi3filter.ValidateResponse(ctx, responseValidationInput)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 

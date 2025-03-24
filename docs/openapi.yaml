@@ -30,6 +30,9 @@ paths:
                       type: array
                       items:
                         type: object
+                        required:
+                          - fact
+                          - id
                         properties:
                           fact:
                             type: string

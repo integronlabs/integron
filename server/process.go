@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -37,8 +36,7 @@ func (s *Server) ProcessStep(ctx context.Context, currentStepKey string, w http.
 	stepOutput, next, err := handler(ctx, stepMap, stepOutputs)
 	if err != nil {
 		if stepType == "error" {
-			message, _ := json.Marshal(map[string]interface{}{"message": stepInput})
-			http.Error(w, string(message), http.StatusInternalServerError)
+			Error(w, stepInput.(error).Error(), http.StatusInternalServerError)
 			return nil, "end"
 		}
 		return err.Error(), "error"

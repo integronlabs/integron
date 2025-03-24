@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/integronlabs/integron/helpers"
@@ -76,8 +77,13 @@ func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	responseCode := 200
-	if status, ok := outputMap["status"].(float64); ok {
-		responseCode = int(status)
+	if status, ok := outputMap["status"].(string); ok {
+		// conver status to int
+		responseCode, err = strconv.Atoi(status)
+		if err != nil {
+			http.Error(w, "Invalid status code", http.StatusInternalServerError)
+			return
+		}
 	}
 	jsonBody, _ := json.Marshal(outputMap["body"])
 	responseBody := []byte(jsonBody)

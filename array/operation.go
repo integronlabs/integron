@@ -36,7 +36,7 @@ func Run(ctx context.Context, stepMap map[string]interface{}, stepOutputs map[st
 	// replace placeholders in input
 	inputMap, err := jsonpath.Get(inputString, stepOutputs)
 	if err != nil {
-		logrus.Errorf("could not read value from input: %v", err)
+		logrus.WithContext(ctx).Errorf("could not read value from input: %v", err)
 		return err.Error(), "error", err
 	}
 

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
 	"net/http"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -21,15 +22,15 @@ import (
 	_ "embed"
 )
 
-//go:embed docs/openapi.yaml
-var openapiSpec []byte
-
 func main() {
 	helpers.SetupLogging()
 
+	openapiSpecPath := flag.String("spec", "docs/openapi.yaml", "Path to the OpenAPI spec")
+	flag.Parse()
+
 	ctx := context.Background()
 	loader := &openapi3.Loader{Context: ctx, IsExternalRefsAllowed: true}
-	doc, err := loader.LoadFromData(openapiSpec)
+	doc, err := loader.LoadFromFile(*openapiSpecPath)
 	if err != nil {
 		panic(err)
 	}
@@ -54,8 +55,8 @@ func main() {
 		client := http.Client{}
 		return httpOperation.Run(ctx, &client, stepMap, stepOutputs)
 	})
-	server.RegisterStep("array", array.Run)
-	server.RegisterStep("object", object.Run)
+	server.RegisterStep("transformarray", array.Run)
+	server.RegisterStep("transformobject", object.Run)
 	server.RegisterStep("removenull", removenull.Run)
 	server.RegisterStep("error", func(ctx context.Context, stepMap map[string]interface{}, stepOutputs map[string]interface{}) (interface{}, string, error) {
 		return nil, "end", errors.New("error step triggered")
@@ -67,7 +68,7 @@ func main() {
 	http.Handle("/docs/", http.StripPrefix("/docs/", fs))
 
 	http.Handle("/ui/", v5emb.New(
-		"Integron Sunrise",
+		"Integron",
 		"/docs/openapi.yaml",
 		"/ui/",
 	))

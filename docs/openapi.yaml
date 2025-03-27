@@ -1,15 +1,23 @@
 openapi: 3.0.3
 info:
   title: Integron Dog Facts - OpenAPI 3.0
+  description: This is an OpenAPI 3.0 specification for the Integron Dog Facts API.
   contact:
     email: moha@moha.fi
   version: 1.0.0
+tags:
+  - name: dogFacts
+    description: Dog Facts
 servers:
   - url: http://localhost:8080
 paths:
     /facts:
       get:
         summary: Get a random dog fact
+        description: Retrieve a random dog fact from the Dog Facts API
+        operationId: getDogFact
+        tags:
+          - dogFacts
         parameters:
           - name: amount
             in: query
@@ -72,7 +80,7 @@ paths:
                   status: $.status
                 next: "arrayTransform"
           - name: arrayTransform
-            type: array
+            type: transformarray
             input: $.dogFacts.response.data
             output:
               fact: $.attributes.body
@@ -84,7 +92,7 @@ paths:
             input: $.arrayTransform
             next: "responseMarshal"
           - name: responseMarshal
-            type: object
+            type: transformobject
             output:
               body:
                 data: $.arrayTransform

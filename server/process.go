@@ -37,7 +37,11 @@ func (s *Server) ProcessStep(r *http.Request, currentStepKey string, w http.Resp
 	}
 
 	if stepType == "error" {
-		Error(r, w, stepInput.(string), http.StatusInternalServerError, "EXCEPTION")
+		if inputString, ok := stepInput.(string); ok {
+			Error(r, w, inputString, http.StatusInternalServerError, "EXCEPTION")
+		} else {
+			Error(r, w, stepInput.(error).Error(), http.StatusInternalServerError, "EXCEPTION")
+		}
 		return nil, "end"
 	}
 

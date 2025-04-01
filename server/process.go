@@ -36,12 +36,13 @@ func (s *Server) ProcessStep(r *http.Request, currentStepKey string, w http.Resp
 		return fmt.Errorf("unknown step type: %s", stepType), "error"
 	}
 
+	if stepType == "error" {
+		Error(r, w, stepInput.(string), http.StatusInternalServerError, "EXCEPTION")
+		return nil, "end"
+	}
+
 	stepOutput, next, err := handler(ctx, stepMap, stepOutputs)
 	if err != nil {
-		if stepType == "error" {
-			Error(r, w, stepInput.(error).Error(), http.StatusInternalServerError, "EXCEPTION")
-			return nil, "end"
-		}
 		return err.Error(), "error"
 	}
 	logrus.WithContext(ctx).Debugf("Step %s completed", currentStepKey)
